@@ -21,6 +21,45 @@
       }
     }
   </script>
+  <style id="theme-styles">
+    /* Light mode overrides */
+    body.light { background: #f8fafc !important; color: #1e293b !important; }
+    .light .bg-gray-900 { background: #ffffff !important; }
+    .light .bg-gray-950 { background: #f8fafc !important; }
+    .light .bg-gray-900\/50 { background: rgba(255,255,255,0.9) !important; }
+    .light .bg-gray-800 { background: #f1f5f9 !important; }
+    .light .bg-gray-800\/50 { background: rgba(241,245,249,0.7) !important; }
+    .light .bg-gray-700 { background: #e2e8f0 !important; }
+    .light .bg-gray-700\/50 { background: rgba(226,232,240,0.5) !important; }
+    .light .border-gray-800 { border-color: #e2e8f0 !important; }
+    .light .border-gray-700 { border-color: #cbd5e1 !important; }
+    .light .text-gray-100 { color: #1e293b !important; }
+    .light .text-gray-200 { color: #334155 !important; }
+    .light .text-gray-300 { color: #475569 !important; }
+    .light .text-gray-400 { color: #64748b !important; }
+    .light .text-gray-500 { color: #64748b !important; }
+    .light .text-gray-600 { color: #94a3b8 !important; }
+    .light .hover\:text-gray-300:hover { color: #334155 !important; }
+    .light .hover\:text-gray-400:hover { color: #475569 !important; }
+    .light .hover\:bg-gray-800:hover { background: #f1f5f9 !important; }
+    .light .hover\:bg-gray-800\/50:hover { background: rgba(241,245,249,0.5) !important; }
+    .light .border-green-500\/30 { border-color: rgba(34,197,94,0.4) !important; }
+    .light .bg-green-500\/10 { background: rgba(34,197,94,0.15) !important; }
+    .light .bg-green-500\/20 { background: rgba(34,197,94,0.2) !important; }
+    .light .border-claude-orange\/30 { border-color: rgba(232,111,51,0.4) !important; }
+    .light .bg-claude-orange\/10 { background: rgba(232,111,51,0.12) !important; }
+    .light .bg-claude-orange\/20 { background: rgba(232,111,51,0.2) !important; }
+    .light .border-yellow-500\/20 { border-color: rgba(234,179,8,0.4) !important; }
+    .light .bg-yellow-500\/10 { background: rgba(234,179,8,0.15) !important; }
+    .light .bg-yellow-500\/20 { background: rgba(234,179,8,0.25) !important; }
+    .light .border-blue-500\/20 { border-color: rgba(59,130,246,0.4) !important; }
+    .light .bg-blue-500\/10 { background: rgba(59,130,246,0.15) !important; }
+    .light .prose pre { background: #f1f5f9 !important; }
+    .light .prose code { background: #e2e8f0 !important; }
+    .light ::-webkit-scrollbar-thumb { background: #e2e8f0 !important; }
+    .light ::-webkit-scrollbar-thumb:hover { background: #cbd5e1 !important; }
+    body.light { scrollbar-color: #e2e8f0 transparent; }
+  </style>
   <style>
     .prose pre { background: #1f2937; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
     .prose code { background: #374151; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; }
@@ -28,6 +67,15 @@
     .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     .kanban-column { min-height: calc(100vh - 200px); }
+
+    /* Custom scrollbar - dark mode default */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb, #374151); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover, #4b5563); }
+    * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb, #374151) transparent; }
+    :root { --scrollbar-thumb: #374151; --scrollbar-thumb-hover: #4b5563; }
+    body.light { --scrollbar-thumb: #d1d5db; --scrollbar-thumb-hover: #9ca3af; }
   </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
@@ -70,7 +118,9 @@
       </nav>
 
       <footer class="p-3 border-t border-gray-800 text-xs text-gray-600">
-        <a href="https://github.com" class="hover:text-gray-400">GitHub</a>
+        <a href="https://github.com/L1AD/claude-task-viewer" target="_blank" class="hover:text-gray-400">GitHub</a>
+        <span class="mx-2">·</span>
+        <a href="https://policylayer.com" target="_blank" class="hover:text-gray-400">PolicyLayer</a>
         <span class="mx-2">·</span>
         <span>v1.0.0</span>
       </footer>
@@ -102,13 +152,21 @@
                 </div>
                 <span id="progress-percent" class="text-sm font-medium text-claude-orange">0%</span>
               </div>
+              <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-gray-200 transition-colors" title="Toggle theme">
+                <svg id="theme-icon-dark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <svg id="theme-icon-light" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+              </button>
             </div>
           </div>
         </header>
 
         <!-- Kanban board -->
         <div class="flex-1 overflow-x-auto p-4">
-          <div class="flex gap-4 h-full min-w-max">
+          <div class="flex gap-8 h-full min-w-max">
             <!-- Pending column -->
             <div class="w-80 flex flex-col">
               <div class="flex items-center gap-2 mb-3 px-1">
@@ -483,16 +541,42 @@
       return div.innerHTML;
     }
 
+    // Theme toggle
+    function toggleTheme() {
+      const body = document.body;
+      const isLight = body.classList.contains('light');
+
+      if (isLight) {
+        body.classList.remove('light');
+        localStorage.setItem('theme', 'dark');
+        document.getElementById('theme-icon-dark').classList.remove('hidden');
+        document.getElementById('theme-icon-light').classList.add('hidden');
+      } else {
+        body.classList.add('light');
+        localStorage.setItem('theme', 'light');
+        document.getElementById('theme-icon-dark').classList.add('hidden');
+        document.getElementById('theme-icon-light').classList.remove('hidden');
+      }
+    }
+
+    // Load saved theme
+    function loadTheme() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'light') {
+        document.body.classList.add('light');
+        document.getElementById('theme-icon-dark').classList.add('hidden');
+        document.getElementById('theme-icon-light').classList.remove('hidden');
+      }
+    }
+
     // Initialize
+    loadTheme();
     fetchSessions();
     setupEventSource();
 
-    // Auto-select most recent session with activity
+    // Default to All Tasks view
     setTimeout(() => {
-      if (sessions.length > 0 && !currentSessionId) {
-        const activeSession = sessions.find(s => s.inProgress > 0) || sessions[0];
-        fetchTasks(activeSession.id);
-      }
+      showAllTasks();
     }, 500);
   </script>
 </body>
