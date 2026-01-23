@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/claude-task-viewer.git"
+    "url": "git+https://github.com/L1AD/claude-task-viewer.git"
   },
   "keywords": [
     "claude",
@@ -26,9 +26,9 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/your-username/claude-task-viewer/issues"
+    "url": "https://github.com/L1AD/claude-task-viewer/issues"
   },
-  "homepage": "https://github.com/your-username/claude-task-viewer#readme",
+  "homepage": "https://github.com/L1AD/claude-task-viewer#readme",
   "dependencies": {
     "chokidar": "^3.5.3",
     "express": "^4.18.2",

@@ -15,7 +15,7 @@ Then open http://localhost:3456
 ### From source
 
 ```bash
-git clone https://github.com/your-username/claude-task-viewer.git
+git clone https://github.com/L1AD/claude-task-viewer.git
 cd claude-task-viewer
 npm install
 npm start
