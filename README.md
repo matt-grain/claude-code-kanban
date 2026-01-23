@@ -26,8 +26,11 @@ Tasks can block other tasks. The viewer shows these relationships clearly — bl
 ### Notes
 Add context to any task. Your notes are appended to the task description, so Claude sees them when it reads the task. Use this to clarify requirements, add constraints, or redirect work — all without interrupting Claude's flow.
 
+### Project Filtering
+Filter tasks by project using the dropdown. Working on multiple codebases? See only what's relevant. Combine with the session filter to show just active sessions for a specific project.
+
 ### Session Management
-Browse all your Claude Code sessions with progress indicators. Filter to active sessions only. Each session shows completion percentage!
+Browse all your Claude Code sessions with progress indicators. Filter to active sessions only, or show everything. Each session shows completion percentage.
 
 ## Installation
 

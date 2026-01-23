@@ -139,40 +139,6 @@
       background: #ef4444;
     }
 
-    /* Nav item */
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 10px 12px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      font-family: var(--mono);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      text-align: left;
-    }
-
-    .nav-item:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-
-    .nav-item.active {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-    }
-
-    .nav-item svg {
-      width: 16px;
-      height: 16px;
-      opacity: 0.6;
-    }
-
     /* Sidebar sections */
     .sidebar-section {
       display: flex;
@@ -198,26 +164,37 @@
       color: var(--text-muted);
     }
 
-    .filter-toggle {
+    .filter-row {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 400;
-      color: var(--text-tertiary);
-      cursor: pointer;
+      gap: 8px;
+      padding: 0 12px 12px;
     }
 
-    .filter-toggle input[type="checkbox"] {
+    .filter-dropdown {
+      flex: 1;
       appearance: none;
-      width: 10px;
-      height: 10px;
-      border: 1px solid var(--text-muted);
-      border-radius: 2px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 24px 6px 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-secondary);
       cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235a5c60' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
-    .filter-toggle input[type="checkbox"]:checked {
-      background: var(--accent);
+    .filter-dropdown option {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+    }
+
+    .filter-dropdown:focus {
+      outline: none;
       border-color: var(--accent);
     }
 
@@ -292,17 +269,6 @@
       padding: 0 12px 12px;
     }
 
-    .sessions-list .nav-item {
-      margin-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      border-radius: 0;
-    }
-
-    .sessions-list .nav-item:hover {
-      background: transparent;
-    }
-
     .session-item {
       display: block;
       width: 100%;
@@ -355,10 +321,10 @@
       50% { opacity: 0.6; transform: scale(0.9); }
     }
 
-    .session-project {
+    .session-secondary {
       font-size: 11px;
-      color: var(--text-tertiary);
-      margin-top: 4px;
+      color: var(--text-muted);
+      margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1013,23 +979,21 @@
         </div>
       </div>
 
-      <!-- Sessions -->
+      <!-- Tasks -->
       <div class="sidebar-section flex-1">
         <div class="section-header">
-          <span>Sessions</span>
-          <label class="filter-toggle">
-            <input type="checkbox" id="hide-inactive" onchange="toggleHideInactive()">
-            <span>Active only</span>
-          </label>
+          <span>Tasks</span>
         </div>
-        <div id="sessions-list" class="sessions-list">
-          <button id="all-tasks-btn" class="nav-item" onclick="showAllTasks()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            <span>All Tasks</span>
-          </button>
+        <div class="filter-row">
+          <select id="project-filter" class="filter-dropdown" onchange="filterByProject(this.value)">
+            <option value="">All Projects</option>
+          </select>
+          <select id="session-filter" class="filter-dropdown" onchange="filterBySessions(this.value)">
+            <option value="all">All Sessions</option>
+            <option value="active">Active Only</option>
+          </select>
         </div>
+        <div id="sessions-list" class="sessions-list"></div>
       </div>
 
       <footer class="sidebar-footer">
@@ -1124,7 +1088,8 @@
     let currentSessionId = null;
     let currentTasks = [];
     let viewMode = 'session';
-    let hideInactive = localStorage.getItem('hideInactive') === 'true';
+    let sessionFilter = localStorage.getItem('sessionFilter') || 'all'; // 'all' or 'active'
+    let filterProject = null; // null = all projects, or project path to filter
 
     // DOM
     const sessionsList = document.getElementById('sessions-list');
@@ -1159,7 +1124,10 @@
       try {
         const res = await fetch('/api/tasks/all');
         const allTasks = await res.json();
-        const activeTasks = allTasks.filter(t => t.status === 'in_progress');
+        let activeTasks = allTasks.filter(t => t.status === 'in_progress');
+        if (filterProject) {
+          activeTasks = activeTasks.filter(t => t.project === filterProject);
+        }
         renderLiveUpdates(activeTasks);
       } catch (error) {
         console.error('Failed to fetch live updates:', error);
@@ -1207,7 +1175,11 @@
         viewMode = 'all';
         currentSessionId = null;
         const res = await fetch('/api/tasks/all');
-        currentTasks = await res.json();
+        let tasks = await res.json();
+        if (filterProject) {
+          tasks = tasks.filter(t => t.project === filterProject);
+        }
+        currentTasks = tasks;
         renderAllTasks();
         renderSessions();
       } catch (error) {
@@ -1223,8 +1195,11 @@
       const completed = currentTasks.filter(t => t.status === 'completed').length;
       const percent = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
 
-      sessionTitle.textContent = 'All Tasks';
-      sessionMeta.textContent = `${totalTasks} tasks across ${sessions.length} sessions`;
+      const projectName = filterProject ? filterProject.split('/').pop() : null;
+      sessionTitle.textContent = filterProject ? `Tasks: ${projectName}` : 'All Tasks';
+      sessionMeta.textContent = filterProject
+        ? `${totalTasks} tasks in this project`
+        : `${totalTasks} tasks across ${sessions.length} sessions`;
       progressPercent.textContent = `${percent}%`;
       progressBar.style.width = `${percent}%`;
 
@@ -1232,46 +1207,56 @@
     }
 
     function renderSessions() {
-      const allTasksBtn = document.getElementById('all-tasks-btn');
-      allTasksBtn.classList.toggle('active', viewMode === 'all');
+      // Update project dropdown
+      updateProjectDropdown();
 
-      const filteredSessions = hideInactive
-        ? sessions.filter(s => s.pending > 0 || s.inProgress > 0)
-        : sessions;
-
-      // Get container for session items (after All Tasks button)
-      let sessionsContainer = document.getElementById('sessions-items');
-      if (!sessionsContainer) {
-        sessionsContainer = document.createElement('div');
-        sessionsContainer.id = 'sessions-items';
-        sessionsList.appendChild(sessionsContainer);
+      let filteredSessions = sessions;
+      if (sessionFilter === 'active') {
+        filteredSessions = filteredSessions.filter(s => s.pending > 0 || s.inProgress > 0);
+      }
+      if (filterProject) {
+        filteredSessions = filteredSessions.filter(s => s.project === filterProject);
       }
 
       if (filteredSessions.length === 0) {
-        sessionsContainer.innerHTML = `
+        let emptyMsg = 'No sessions found';
+        let emptyHint = 'Tasks appear when you use Claude Code';
+        if (filterProject && sessionFilter === 'active') {
+          emptyMsg = 'No active sessions for this project';
+          emptyHint = 'Try "All Sessions" or "All Projects"';
+        } else if (filterProject) {
+          emptyMsg = 'No sessions for this project';
+          emptyHint = 'Select "All Projects" to see all';
+        } else if (sessionFilter === 'active') {
+          emptyMsg = 'No active sessions';
+          emptyHint = 'Select "All Sessions" to see all';
+        }
+        sessionsList.innerHTML = `
           <div style="padding: 24px 12px; text-align: center; color: var(--text-muted); font-size: 12px;">
-            <p>${hideInactive ? 'No active sessions' : 'No sessions found'}</p>
-            <p style="margin-top: 8px; font-size: 11px;">${hideInactive ? 'Uncheck filter to see all' : 'Tasks appear when you use Claude Code'}</p>
+            <p>${emptyMsg}</p>
+            <p style="margin-top: 8px; font-size: 11px;">${emptyHint}</p>
           </div>
         `;
         return;
       }
 
-      sessionsContainer.innerHTML = filteredSessions.map(session => {
+      sessionsList.innerHTML = filteredSessions.map(session => {
         const total = session.taskCount;
         const percent = total > 0 ? Math.round((session.completed / total) * 100) : 0;
         const isActive = session.id === currentSessionId && viewMode === 'session';
         const hasInProgress = session.inProgress > 0;
-        const displayName = session.name || session.id.slice(0, 8) + '...';
+        const sessionName = session.name || session.id.slice(0, 8) + '...';
         const projectName = session.project ? session.project.split('/').pop() : null;
+        const primaryName = projectName || sessionName;
+        const secondaryName = projectName ? sessionName : null;
 
         return `
           <button onclick="fetchTasks('${session.id}')" class="session-item ${isActive ? 'active' : ''}">
             <div class="session-name">
-              <span>${escapeHtml(displayName)}</span>
+              <span>${escapeHtml(primaryName)}</span>
               ${hasInProgress ? '<span class="pulse"></span>' : ''}
             </div>
-            ${projectName ? `<div class="session-project">${escapeHtml(projectName)}</div>` : ''}
+            ${secondaryName ? `<div class="session-secondary">${escapeHtml(secondaryName)}</div>` : ''}
             <div class="session-progress">
               <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
               <span class="progress-text">${session.completed}/${total}</span>
@@ -1507,10 +1492,29 @@
       return div.innerHTML;
     }
 
-    function toggleHideInactive() {
-      hideInactive = document.getElementById('hide-inactive').checked;
-      localStorage.setItem('hideInactive', hideInactive);
+    function filterBySessions(value) {
+      sessionFilter = value;
+      localStorage.setItem('sessionFilter', sessionFilter);
       renderSessions();
+    }
+
+    function filterByProject(project) {
+      filterProject = project || null;
+      renderSessions();
+      fetchLiveUpdates();
+      showAllTasks();
+    }
+
+    function updateProjectDropdown() {
+      const dropdown = document.getElementById('project-filter');
+      const projects = [...new Set(sessions.map(s => s.project).filter(Boolean))].sort();
+
+      dropdown.innerHTML = '<option value="">All Projects</option>' +
+        projects.map(p => {
+          const name = p.split('/').pop();
+          const selected = p === filterProject ? ' selected' : '';
+          return `<option value="${p}"${selected} title="${escapeHtml(p)}">${escapeHtml(name)}</option>`;
+        }).join('');
     }
 
     function toggleTheme() {
@@ -1529,7 +1533,7 @@
     }
 
     function loadPreferences() {
-      document.getElementById('hide-inactive').checked = hideInactive;
+      document.getElementById('session-filter').value = sessionFilter;
     }
 
     // Init
