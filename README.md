@@ -89,6 +89,18 @@ The viewer exposes a simple API:
 | `GET /api/tasks/all` | Get all tasks across all sessions |
 | `GET /api/events` | SSE stream for live updates |
 
+## Roadmap
+
+We're building deeper integrations with Claude Code:
+
+- **Shared task lists** — Support for `CLAUDE_CODE_TASK_LIST_ID` to view tasks shared across multiple sessions and subagents
+- **Task creation** — Create tasks directly from the viewer that Claude Code will pick up
+- **CLI commands** — `claude-task-viewer add "Fix the bug"` to create tasks from your terminal
+- **Desktop notifications** — Get notified when tasks complete or become unblocked
+- **Export to Linear/GitHub** — Push tasks to your existing project management tools
+
+Have ideas? [Open an issue](https://github.com/L1AD/claude-task-viewer/issues).
+
 ## License
 
 MIT
