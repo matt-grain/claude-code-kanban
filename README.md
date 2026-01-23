@@ -2,6 +2,10 @@
 
 A web-based Kanban board for viewing Claude Code tasks. Watch your tasks update in real-time as Claude works.
 
+![Dark mode](screenshot-dark.png)
+
+![Light mode](screenshot-light.png)
+
 ## Installation
 
 ### Quick start (npx)
