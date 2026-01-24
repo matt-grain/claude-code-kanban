@@ -93,6 +93,9 @@ PORT=8080 npx claude-task-viewer
 
 # Open browser automatically
 npx claude-task-viewer --open
+
+# Use a different Claude config directory (for multiple accounts)
+npx claude-task-viewer --dir=~/.claude-work
 ```
 
 ## API
