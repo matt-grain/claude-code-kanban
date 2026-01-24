@@ -33,12 +33,12 @@ app.use(express.static(path.join(__dirname, 'public')));
  * Returns { customTitle, slug } - customTitle from /rename, slug from session
  */
 function readSessionInfoFromJsonl(jsonlPath) {
-  const result = { customTitle: null, slug: null };
+  const result = { customTitle: null, slug: null, projectPath: null };
 
   try {
     if (!existsSync(jsonlPath)) return result;
 
-    // Read first 64KB - should contain custom-title and at least one message with slug
+    // Read first 64KB - should contain custom-title and at least one message with slug/cwd
     const fd = require('fs').openSync(jsonlPath, 'r');
     const buffer = Buffer.alloc(65536);
     const bytesRead = require('fs').readSync(fd, buffer, 0, 65536, 0);
@@ -62,8 +62,13 @@ function readSessionInfoFromJsonl(jsonlPath) {
           result.slug = data.slug;
         }
 
-        // Stop early if we found both
-        if (result.customTitle && result.slug) break;
+        // Extract project path from cwd field (actual path, no encoding issues)
+        if (data.cwd && !result.projectPath) {
+          result.projectPath = data.cwd;
+        }
+
+        // Stop early if we found all three
+        if (result.customTitle && result.slug && result.projectPath) break;
       } catch (e) {
         // Skip malformed lines
       }
@@ -104,16 +109,13 @@ function loadSessionMetadata() {
         const sessionId = file.replace('.jsonl', '');
         const jsonlPath = path.join(projectPath, file);
 
-        // Read customTitle and slug from JSONL
+        // Read customTitle, slug, and actual project path from JSONL
         const sessionInfo = readSessionInfoFromJsonl(jsonlPath);
-
-        // Decode project path from folder name (replace - with /)
-        const projectName = projectDir.name.replace(/^-/, '').replace(/-/g, '/');
 
         metadata[sessionId] = {
           customTitle: sessionInfo.customTitle,
           slug: sessionInfo.slug,
-          project: '/' + projectName,
+          project: sessionInfo.projectPath || null,
           jsonlPath: jsonlPath
         };
       }
@@ -135,6 +137,7 @@ function loadSessionMetadata() {
                 metadata[entry.sessionId].customName = entry.name;
               }
               // Add other useful fields
+              metadata[entry.sessionId].description = entry.description || null;
               metadata[entry.sessionId].gitBranch = entry.gitBranch || null;
               metadata[entry.sessionId].created = entry.created || null;
             }
@@ -154,9 +157,10 @@ function loadSessionMetadata() {
 }
 
 /**
- * Get display name for a session: customTitle > slug > null (frontend shows UUID)
+ * Get display name for a session: customName > customTitle > slug > null (frontend shows UUID)
  */
 function getSessionDisplayName(sessionId, meta) {
+  if (meta?.customName) return meta.customName;
   if (meta?.customTitle) return meta.customTitle;
   if (meta?.slug) return meta.slug;
   return null; // Frontend will show UUID as fallback
@@ -164,58 +168,105 @@ function getSessionDisplayName(sessionId, meta) {
 
 // API: List all sessions
 app.get('/api/sessions', async (req, res) => {
+  // Prevent browser caching
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   try {
-    if (!existsSync(TASKS_DIR)) {
-      return res.json([]);
-    }
+    // Parse limit parameter (default: 20, "all" for unlimited)
+    const limitParam = req.query.limit || '20';
+    const limit = limitParam === 'all' ? null : parseInt(limitParam, 10);
 
     const metadata = loadSessionMetadata();
-    const entries = readdirSync(TASKS_DIR, { withFileTypes: true });
-    const sessions = [];
+    const sessionsMap = new Map();
 
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const sessionPath = path.join(TASKS_DIR, entry.name);
-        const stat = statSync(sessionPath);
-        const taskFiles = readdirSync(sessionPath).filter(f => f.endsWith('.json'));
+    // First, add sessions that have tasks directories
+    if (existsSync(TASKS_DIR)) {
+      const entries = readdirSync(TASKS_DIR, { withFileTypes: true });
 
-        // Get task summary
-        let completed = 0;
-        let inProgress = 0;
-        let pending = 0;
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const sessionPath = path.join(TASKS_DIR, entry.name);
+          const stat = statSync(sessionPath);
+          const taskFiles = readdirSync(sessionPath).filter(f => f.endsWith('.json'));
 
-        for (const file of taskFiles) {
+          // Get task summary
+          let completed = 0;
+          let inProgress = 0;
+          let pending = 0;
+
+          for (const file of taskFiles) {
+            try {
+              const task = JSON.parse(readFileSync(path.join(sessionPath, file), 'utf8'));
+              if (task.status === 'completed') completed++;
+              else if (task.status === 'in_progress') inProgress++;
+              else pending++;
+            } catch (e) {
+              // Skip invalid files
+            }
+          }
+
+          // Get metadata for this session
+          const meta = metadata[entry.name] || {};
+
+          sessionsMap.set(entry.name, {
+            id: entry.name,
+            name: getSessionDisplayName(entry.name, meta),
+            slug: meta.slug || null,
+            project: meta.project || null,
+            description: meta.description || null,
+            gitBranch: meta.gitBranch || null,
+            taskCount: taskFiles.length,
+            completed,
+            inProgress,
+            pending,
+            createdAt: meta.created || null,
+            modifiedAt: stat.mtime.toISOString()
+          });
+        }
+      }
+    }
+
+    // Then, add sessions from metadata that don't have task directories yet
+    for (const [sessionId, meta] of Object.entries(metadata)) {
+      if (!sessionsMap.has(sessionId)) {
+        // Get modified time from JSONL file
+        let modifiedAt = new Date(0).toISOString(); // Fallback
+        if (meta.jsonlPath && existsSync(meta.jsonlPath)) {
           try {
-            const task = JSON.parse(readFileSync(path.join(sessionPath, file), 'utf8'));
-            if (task.status === 'completed') completed++;
-            else if (task.status === 'in_progress') inProgress++;
-            else pending++;
+            const stat = statSync(meta.jsonlPath);
+            modifiedAt = stat.mtime.toISOString();
           } catch (e) {
-            // Skip invalid files
+            // Use fallback
           }
         }
 
-        // Get metadata for this session
-        const meta = metadata[entry.name] || {};
-
-        sessions.push({
-          id: entry.name,
-          name: getSessionDisplayName(entry.name, meta),
+        sessionsMap.set(sessionId, {
+          id: sessionId,
+          name: getSessionDisplayName(sessionId, meta),
           slug: meta.slug || null,
           project: meta.project || null,
+          description: meta.description || null,
           gitBranch: meta.gitBranch || null,
-          taskCount: taskFiles.length,
-          completed,
-          inProgress,
-          pending,
+          taskCount: 0,
+          completed: 0,
+          inProgress: 0,
+          pending: 0,
           createdAt: meta.created || null,
-          modifiedAt: stat.mtime.toISOString()
+          modifiedAt: modifiedAt
         });
       }
     }
 
-    // Sort by most recently modified
+    // Convert map to array and sort by most recently modified
+    let sessions = Array.from(sessionsMap.values());
     sessions.sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt));
+
+    // Apply limit if specified
+    if (limit !== null && limit > 0) {
+      sessions = sessions.slice(0, limit);
+    }
 
     res.json(sessions);
   } catch (error) {
@@ -328,6 +379,180 @@ app.post('/api/tasks/:sessionId/:taskId/note', async (req, res) => {
   }
 });
 
+// API: Update a task
+app.patch('/api/tasks/:sessionId/:taskId', async (req, res) => {
+  try {
+    const { sessionId, taskId } = req.params;
+    const updates = req.body;
+
+    const taskPath = path.join(TASKS_DIR, sessionId, `${taskId}.json`);
+
+    if (!existsSync(taskPath)) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Read current task
+    const task = JSON.parse(await fs.readFile(taskPath, 'utf8'));
+
+    // Validate status transitions
+    if (updates.status && updates.status !== task.status) {
+      // Don't allow moving blocked tasks to in_progress
+      if (updates.status === 'in_progress' && task.blockedBy && task.blockedBy.length > 0) {
+        return res.status(400).json({ error: 'Cannot start a blocked task' });
+      }
+    }
+
+    // Apply updates (only allow specific fields)
+    const allowedFields = ['subject', 'description', 'status', 'activeForm', 'blocks', 'blockedBy', 'metadata', 'order'];
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        task[field] = updates[field];
+      }
+    }
+
+    // Write updated task
+    await fs.writeFile(taskPath, JSON.stringify(task, null, 2));
+
+    res.json({ success: true, task });
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
+// API: Delete a task
+app.delete('/api/tasks/:sessionId/:taskId', async (req, res) => {
+  try {
+    const { sessionId, taskId } = req.params;
+    const taskPath = path.join(TASKS_DIR, sessionId, `${taskId}.json`);
+
+    if (!existsSync(taskPath)) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Check if this task blocks other tasks
+    const sessionPath = path.join(TASKS_DIR, sessionId);
+    const taskFiles = readdirSync(sessionPath).filter(f => f.endsWith('.json'));
+
+    for (const file of taskFiles) {
+      const otherTask = JSON.parse(readFileSync(path.join(sessionPath, file), 'utf8'));
+      if (otherTask.blockedBy && otherTask.blockedBy.includes(taskId)) {
+        return res.status(400).json({
+          error: 'Cannot delete task that blocks other tasks',
+          blockedTasks: [otherTask.id]
+        });
+      }
+    }
+
+    // Delete the task file
+    await fs.unlink(taskPath);
+
+    res.json({ success: true, taskId });
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    res.status(500).json({ error: 'Failed to delete task' });
+  }
+});
+
+// API: Create a new task
+app.post('/api/tasks/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { subject, description, status = 'pending', blocks = [], blockedBy = [] } = req.body;
+
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({ error: 'Subject is required' });
+    }
+
+    const sessionPath = path.join(TASKS_DIR, sessionId);
+
+    // Create session directory if it doesn't exist
+    if (!existsSync(sessionPath)) {
+      await fs.mkdir(sessionPath, { recursive: true });
+    }
+
+    // Find next available task ID
+    const taskFiles = readdirSync(sessionPath).filter(f => f.endsWith('.json'));
+    const taskIds = taskFiles.map(f => parseInt(f.replace('.json', ''))).filter(id => !isNaN(id));
+    const nextId = taskIds.length > 0 ? Math.max(...taskIds) + 1 : 1;
+
+    // Create new task
+    const task = {
+      id: nextId.toString(),
+      subject: subject.trim(),
+      description: description || '',
+      activeForm: '',
+      status,
+      blocks,
+      blockedBy,
+      metadata: {}
+    };
+
+    const taskPath = path.join(sessionPath, `${nextId}.json`);
+    await fs.writeFile(taskPath, JSON.stringify(task, null, 2));
+
+    res.json({ success: true, task });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ error: 'Failed to create task' });
+  }
+});
+
+// API: Update session metadata (custom name and description)
+app.patch('/api/sessions/:sessionId/metadata', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { customName, description } = req.body;
+
+    // Find the project directory for this session
+    const metadata = loadSessionMetadata();
+    const sessionMeta = metadata[sessionId];
+
+    if (!sessionMeta || !sessionMeta.jsonlPath) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const projectPath = path.dirname(sessionMeta.jsonlPath);
+    const indexPath = path.join(projectPath, 'sessions-index.json');
+
+    // Load or create sessions-index.json
+    let indexData = { entries: [] };
+    if (existsSync(indexPath)) {
+      try {
+        indexData = JSON.parse(readFileSync(indexPath, 'utf8'));
+      } catch (e) {
+        console.error('Error parsing sessions-index.json:', e);
+      }
+    }
+
+    // Find or create entry for this session
+    let entry = indexData.entries.find(e => e.sessionId === sessionId);
+    if (!entry) {
+      entry = { sessionId };
+      indexData.entries.push(entry);
+    }
+
+    // Update metadata
+    if (customName !== undefined) {
+      entry.customName = customName.trim() || null;
+    }
+    if (description !== undefined) {
+      entry.description = description.trim() || null;
+    }
+
+    // Write back to file
+    await fs.writeFile(indexPath, JSON.stringify(indexData, null, 2));
+
+    // Invalidate cache
+    lastMetadataRefresh = 0;
+
+    res.json({ success: true, metadata: entry });
+  } catch (error) {
+    console.error('Error updating session metadata:', error);
+    res.status(500).json({ error: 'Failed to update session metadata' });
+  }
+});
+
 // SSE endpoint for live updates
 app.get('/api/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -379,13 +604,17 @@ if (existsSync(TASKS_DIR)) {
 
 // Also watch projects dir for metadata changes
 if (existsSync(PROJECTS_DIR)) {
-  const projectsWatcher = chokidar.watch(path.join(PROJECTS_DIR, '*/*.jsonl'), {
+  const projectsWatcher = chokidar.watch([
+    path.join(PROJECTS_DIR, '*/*.jsonl'),
+    path.join(PROJECTS_DIR, '*/sessions-index.json')
+  ], {
     persistent: true,
     ignoreInitial: true,
     depth: 1
   });
 
-  projectsWatcher.on('all', (event) => {
+  projectsWatcher.on('all', (event, filePath) => {
+    console.log('Metadata file changed:', filePath);
     // Invalidate cache on any change
     lastMetadataRefresh = 0;
     broadcast({ type: 'metadata-update' });

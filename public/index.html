@@ -316,6 +316,24 @@
       box-shadow: 0 0 12px var(--accent-glow);
     }
 
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-left: 2px;
+    }
+
+    .status-active {
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-inactive {
+      background: #f59e0b;
+      opacity: 0.6;
+    }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(0.9); }
@@ -328,6 +346,21 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .session-branch {
+      font-size: 10px;
+      color: var(--accent);
+      margin-top: 3px;
+      padding: 2px 6px;
+      background: var(--border);
+      border-radius: 3px;
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
     }
 
     .session-progress {
@@ -438,6 +471,9 @@
       font-size: 20px;
       font-weight: 400;
       letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .view-meta {
@@ -492,6 +528,16 @@
     .icon-btn svg {
       width: 16px;
       height: 16px;
+    }
+
+    .icon-btn-danger {
+      color: #ef4444;
+    }
+
+    .icon-btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border-color: #ef4444;
     }
 
     /* Kanban */
@@ -587,7 +633,7 @@
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      cursor: pointer;
+      cursor: grab;
       transition: all 0.15s ease;
     }
 
@@ -595,6 +641,24 @@
       background: var(--bg-elevated);
       border-color: var(--text-muted);
       transform: translateY(-1px);
+    }
+
+    .task-card:active {
+      cursor: grabbing;
+    }
+
+    .task-card.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+      cursor: grabbing;
+    }
+
+    .column-tasks.drag-over {
+      background: var(--accent-dim);
+      border: 2px dashed var(--accent);
+      border-radius: 8px;
+      padding: 4px;
+      margin: -4px;
     }
 
     .task-card.in-progress {
@@ -948,6 +1012,286 @@
     body.light::before {
       display: none;
     }
+
+    /* Interactive elements */
+    .icon-btn.delete:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+    }
+
+    #task-title-edit,
+    #task-desc-edit {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+      background: var(--bg-elevated);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 10px 12px;
+      resize: vertical;
+    }
+
+    #task-title-edit:focus,
+    #task-desc-edit:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .column-header .icon-btn {
+      width: 28px;
+      height: 28px;
+    }
+
+    .column-header .icon-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Search input */
+    .search-container {
+      position: relative;
+      padding: 0 12px 8px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 32px 8px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 18px;
+      top: 8px;
+      width: 20px;
+      height: 20px;
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 3px;
+    }
+
+    .search-clear:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .search-clear.visible {
+      display: flex;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: var(--mono);
+      font-size: 14px;
+      transition: all 0.15s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+      font-family: var(--mono);
+    }
+
+    select.form-input[multiple] {
+      padding: 4px;
+    }
+
+    select.form-input optgroup {
+      background: var(--bg-surface);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 8px 8px 4px 8px;
+      margin-top: 4px;
+      font-style: normal;
+    }
+
+    select.form-input optgroup:first-child {
+      margin-top: 0;
+    }
+
+    select.form-input option {
+      padding: 8px 8px 8px 16px;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-weight: 400;
+      font-size: 13px;
+      border-radius: 4px;
+      margin: 2px 4px;
+    }
+
+    select.form-input option:checked {
+      background: var(--accent);
+      color: var(--bg-deep);
+      font-weight: 500;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #d96329;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+      border-color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -984,6 +1328,20 @@
         <div class="section-header">
           <span>Tasks</span>
         </div>
+        <div class="search-container">
+          <input
+            id="search-input"
+            type="text"
+            class="search-input"
+            placeholder="Search tasks, sessions, projects..."
+            oninput="handleSearch(this.value)"
+          />
+          <button id="search-clear-btn" class="search-clear" onclick="clearSearch()" title="Clear search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
         <div class="filter-row">
           <select id="project-filter" class="filter-dropdown" onchange="filterByProject(this.value)">
             <option value="">All Projects</option>
@@ -991,6 +1349,14 @@
           <select id="session-filter" class="filter-dropdown" onchange="filterBySessions(this.value)">
             <option value="all">All Sessions</option>
             <option value="active">Active Only</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <select id="session-limit" class="filter-dropdown" onchange="changeSessionLimit(this.value)">
+            <option value="10">Show 10</option>
+            <option value="20">Show 20</option>
+            <option value="50">Show 50</option>
+            <option value="all">Show All</option>
           </select>
         </div>
         <div id="sessions-list" class="sessions-list"></div>
@@ -1034,6 +1400,13 @@
                 <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
               </svg>
             </button>
+            <button class="icon-btn" onclick="showHelpModal()" title="Keyboard shortcuts (?)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
+              </svg>
+            </button>
           </div>
         </header>
 
@@ -1043,6 +1416,11 @@
               <span class="column-dot pending"></span>
               <span class="column-title pending">Pending</span>
               <span id="pending-count" class="column-count pending">0</span>
+              <button class="icon-btn" onclick="createTask('pending')" title="New task (N)" style="margin-left: auto;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
             </div>
             <div id="pending-tasks" class="column-tasks"></div>
           </div>
@@ -1052,6 +1430,11 @@
               <span class="column-dot in-progress"></span>
               <span class="column-title in-progress">In Progress</span>
               <span id="in-progress-count" class="column-count in-progress">0</span>
+              <button class="icon-btn" onclick="createTask('in_progress')" title="New task (N)" style="margin-left: auto;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
             </div>
             <div id="in-progress-tasks" class="column-tasks"></div>
           </div>
@@ -1061,6 +1444,11 @@
               <span class="column-dot completed"></span>
               <span class="column-title completed">Completed</span>
               <span id="completed-count" class="column-count completed">0</span>
+              <button class="icon-btn" onclick="createTask('completed')" title="New task (N)" style="margin-left: auto;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </button>
             </div>
             <div id="completed-tasks" class="column-tasks"></div>
           </div>
@@ -1089,7 +1477,11 @@
     let currentTasks = [];
     let viewMode = 'session';
     let sessionFilter = localStorage.getItem('sessionFilter') || 'all'; // 'all' or 'active'
+    let sessionLimit = localStorage.getItem('sessionLimit') || '20'; // '10', '20', '50', 'all'
     let filterProject = null; // null = all projects, or project path to filter
+    let searchQuery = ''; // Search query for fuzzy search
+    let allTasksCache = []; // Cache all tasks for search
+    let bulkDeleteSessionId = null; // Track session for bulk delete
 
     // DOM
     const sessionsList = document.getElementById('sessions-list');
@@ -1110,14 +1502,319 @@
     const connectionStatus = document.getElementById('connection-status');
 
     async function fetchSessions() {
+      console.log('[fetchSessions] Starting...');
       try {
-        const res = await fetch('/api/sessions');
+        const res = await fetch(`/api/sessions?limit=${sessionLimit}`);
         sessions = await res.json();
+        console.log('[fetchSessions] Sessions loaded:', sessions.length);
+
+        // Fetch all tasks for search
+        const tasksRes = await fetch('/api/tasks/all');
+        allTasksCache = await tasksRes.json();
+        console.log('[fetchSessions] Tasks cache loaded');
+
         renderSessions();
+        console.log('[fetchSessions] Render complete');
         fetchLiveUpdates();
       } catch (error) {
         console.error('Failed to fetch sessions:', error);
       }
+    }
+
+    function handleSearch(query) {
+      searchQuery = query.toLowerCase().trim();
+
+      // Show/hide clear button
+      const clearBtn = document.getElementById('search-clear-btn');
+      if (searchQuery) {
+        clearBtn.classList.add('visible');
+      } else {
+        clearBtn.classList.remove('visible');
+      }
+
+      renderSessions();
+    }
+
+    function clearSearch() {
+      const searchInput = document.getElementById('search-input');
+      searchInput.value = '';
+      searchQuery = '';
+      document.getElementById('search-clear-btn').classList.remove('visible');
+      renderSessions();
+    }
+
+    let editingSessionId = null;
+
+    function editSessionMetadata(sessionId) {
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session) return;
+
+      editingSessionId = sessionId;
+
+      // Pre-fill the form
+      const nameInput = document.getElementById('session-name-input');
+      const descInput = document.getElementById('session-description-input');
+
+      nameInput.value = session.name || '';
+      descInput.value = session.description || '';
+
+      // Show the modal
+      const modal = document.getElementById('edit-session-modal');
+      modal.classList.add('visible');
+
+      // Focus the name input
+      setTimeout(() => nameInput.focus(), 100);
+
+      // Handle keyboard shortcuts
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeEditSessionModal();
+          document.removeEventListener('keydown', keyHandler);
+        } else if (e.key === 'Enter') {
+          // Allow Enter in textarea for new lines, Cmd/Ctrl+Enter or plain Enter elsewhere to save
+          if (e.target.tagName === 'TEXTAREA' && !e.metaKey && !e.ctrlKey) {
+            return; // Let textarea handle Enter normally
+          }
+          e.preventDefault();
+          saveSessionMetadata();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeEditSessionModal() {
+      const modal = document.getElementById('edit-session-modal');
+      modal.classList.remove('visible');
+      editingSessionId = null;
+    }
+
+    async function saveSessionMetadata() {
+      if (!editingSessionId) return;
+
+      const nameInput = document.getElementById('session-name-input');
+      const descInput = document.getElementById('session-description-input');
+
+      const newName = nameInput.value.trim();
+      const newDescription = descInput.value.trim();
+
+      try {
+        const res = await fetch(`/api/sessions/${editingSessionId}/metadata`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customName: newName,
+            description: newDescription
+          })
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          alert('Failed to update session: ' + (error.error || 'Unknown error'));
+          return;
+        }
+
+        // Close modal
+        closeEditSessionModal();
+
+        // Refresh sessions to show updated name/description
+        await fetchSessions();
+        if (currentSessionId === editingSessionId) {
+          await fetchTasks(editingSessionId);
+        }
+      } catch (error) {
+        console.error('Error updating session metadata:', error);
+        alert('Failed to update session metadata');
+      }
+    }
+
+    function deleteAllSessionTasks(sessionId) {
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session) return;
+
+      // When viewing a single session, currentTasks already contains only that session's tasks
+      // When viewing "All Tasks", tasks have sessionId property, so we filter
+      const sessionTasks = currentSessionId === sessionId
+        ? currentTasks
+        : currentTasks.filter(t => t.sessionId === sessionId);
+
+      if (sessionTasks.length === 0) {
+        alert('No tasks to delete in this session');
+        return;
+      }
+
+      bulkDeleteSessionId = sessionId;
+
+      const displayName = session.name || sessionId;
+      const message = `Delete all ${sessionTasks.length} task(s) from session "${displayName}"?`;
+
+      document.getElementById('delete-session-tasks-message').textContent = message;
+
+      const modal = document.getElementById('delete-session-tasks-modal');
+      modal.classList.add('visible');
+
+      // Handle ESC key
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeDeleteSessionTasksModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeDeleteSessionTasksModal() {
+      const modal = document.getElementById('delete-session-tasks-modal');
+      modal.classList.remove('visible');
+      bulkDeleteSessionId = null;
+    }
+
+    async function confirmDeleteSessionTasks() {
+      if (!bulkDeleteSessionId) return;
+
+      const sessionId = bulkDeleteSessionId;
+      closeDeleteSessionTasksModal();
+
+      // Get tasks to delete
+      const sessionTasks = currentSessionId === sessionId
+        ? currentTasks
+        : currentTasks.filter(t => t.sessionId === sessionId);
+
+      // Sort tasks by dependency order (blocked tasks first, then blockers)
+      const sortedTasks = topologicalSort(sessionTasks);
+
+      let successCount = 0;
+      let failedCount = 0;
+      const failedTasks = [];
+
+      for (const task of sortedTasks) {
+        try {
+          const res = await fetch(`/api/tasks/${sessionId}/${task.id}`, {
+            method: 'DELETE'
+          });
+
+          if (res.ok) {
+            successCount++;
+          } else {
+            failedCount++;
+            const error = await res.json();
+            failedTasks.push({ id: task.id, subject: task.subject, error: error.error });
+            console.error(`Failed to delete task ${task.id}:`, error);
+          }
+        } catch (error) {
+          failedCount++;
+          failedTasks.push({ id: task.id, subject: task.subject, error: 'Network error' });
+          console.error(`Error deleting task ${task.id}:`, error);
+        }
+      }
+
+      // Show result modal
+      showDeleteResultModal(successCount, failedCount, failedTasks);
+
+      // Close detail panel if open
+      closeDetailPanel();
+
+      // Refresh the view
+      await refreshCurrentView();
+    }
+
+    // Topological sort for task deletion order
+    function topologicalSort(tasks) {
+      const result = [];
+      const visited = new Set();
+      const visiting = new Set();
+      const taskMap = new Map(tasks.map(t => [t.id, t]));
+
+      function visit(taskId) {
+        if (visited.has(taskId)) return;
+        if (visiting.has(taskId)) return; // Cycle - skip
+
+        visiting.add(taskId);
+        const task = taskMap.get(taskId);
+
+        if (task && task.blocks && task.blocks.length > 0) {
+          // Visit all tasks that this task blocks (dependencies first)
+          for (const blockedId of task.blocks) {
+            if (taskMap.has(blockedId)) {
+              visit(blockedId);
+            }
+          }
+        }
+
+        visiting.delete(taskId);
+        visited.add(taskId);
+        if (task) result.push(task);
+      }
+
+      // Visit all tasks
+      for (const task of tasks) {
+        visit(task.id);
+      }
+
+      return result;
+    }
+
+    function showDeleteResultModal(successCount, failedCount, failedTasks) {
+      const modal = document.getElementById('delete-result-modal');
+      const messageEl = document.getElementById('delete-result-message');
+      const detailsEl = document.getElementById('delete-result-details');
+
+      if (failedCount === 0) {
+        messageEl.textContent = `Successfully deleted all ${successCount} task(s).`;
+        detailsEl.style.display = 'none';
+      } else {
+        messageEl.textContent = `Deleted ${successCount} task(s). Failed to delete ${failedCount} task(s).`;
+
+        const failedList = failedTasks.map(t =>
+          `<li><strong>${escapeHtml(t.subject)}</strong> (#${escapeHtml(t.id)}): ${escapeHtml(t.error)}</li>`
+        ).join('');
+        detailsEl.innerHTML = `<ul style="margin: 8px 0 0 0; padding-left: 20px;">${failedList}</ul>`;
+        detailsEl.style.display = 'block';
+      }
+
+      modal.classList.add('visible');
+
+      // Handle ESC key
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeDeleteResultModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeDeleteResultModal() {
+      const modal = document.getElementById('delete-result-modal');
+      modal.classList.remove('visible');
+    }
+
+    function fuzzyMatch(text, query) {
+      if (!query) return true;
+      if (!text) return false;
+
+      text = text.toLowerCase();
+      query = query.toLowerCase();
+
+      // Prioritize exact substring match
+      if (text.includes(query)) return true;
+
+      // Split by common delimiters to search in individual words
+      const words = text.split(/[\s\-_\/\.]+/);
+
+      // Check if query matches start of any word
+      for (const word of words) {
+        if (word.startsWith(query)) return true;
+      }
+
+      // Check if any word contains the query
+      for (const word of words) {
+        if (word.includes(query)) return true;
+      }
+
+      return false;
     }
 
     async function fetchLiveUpdates() {
@@ -1162,11 +1859,24 @@
       try {
         viewMode = 'session';
         const res = await fetch(`/api/sessions/${sessionId}`);
-        currentTasks = await res.json();
+
+        if (res.ok) {
+          currentTasks = await res.json();
+        } else if (res.status === 404) {
+          // Session has no tasks directory yet - start with empty task list
+          currentTasks = [];
+        } else {
+          throw new Error(`Failed to fetch tasks: ${res.status}`);
+        }
+
         currentSessionId = sessionId;
         renderSession();
       } catch (error) {
         console.error('Failed to fetch tasks:', error);
+        // Clear tasks on error to avoid showing stale data
+        currentTasks = [];
+        currentSessionId = sessionId;
+        renderSession();
       }
     }
 
@@ -1218,10 +1928,37 @@
         filteredSessions = filteredSessions.filter(s => s.project === filterProject);
       }
 
+      // Apply search filter
+      if (searchQuery) {
+        filteredSessions = filteredSessions.filter(session => {
+          // Search in session name and ID
+          if (session.name && fuzzyMatch(session.name, searchQuery)) return true;
+          if (session.id && fuzzyMatch(session.id, searchQuery)) return true;
+
+          // Search in project path
+          if (session.project && fuzzyMatch(session.project, searchQuery)) return true;
+
+          // Search in description
+          if (session.description && fuzzyMatch(session.description, searchQuery)) return true;
+
+          // Search in tasks for this session
+          const sessionTasks = allTasksCache.filter(t => t.sessionId === session.id);
+          return sessionTasks.some(task =>
+            (task.subject && fuzzyMatch(task.subject, searchQuery)) ||
+            (task.description && fuzzyMatch(task.description, searchQuery)) ||
+            (task.activeForm && fuzzyMatch(task.activeForm, searchQuery))
+          );
+        });
+      }
+
       if (filteredSessions.length === 0) {
         let emptyMsg = 'No sessions found';
         let emptyHint = 'Tasks appear when you use Claude Code';
-        if (filterProject && sessionFilter === 'active') {
+
+        if (searchQuery) {
+          emptyMsg = `No results for "${searchQuery}"`;
+          emptyHint = 'Try a different search term or clear the search';
+        } else if (filterProject && sessionFilter === 'active') {
           emptyMsg = 'No active sessions for this project';
           emptyHint = 'Try "All Sessions" or "All Projects"';
         } else if (filterProject) {
@@ -1250,13 +1987,36 @@
         const primaryName = projectName || sessionName;
         const secondaryName = projectName ? sessionName : null;
 
+        // Format git branch for display
+        const gitBranch = session.gitBranch ? escapeHtml(session.gitBranch) : null;
+
+        // Determine session status (active = modified within 1 hour OR has in-progress tasks)
+        const modifiedTime = new Date(session.modifiedAt);
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const isRecentlyActive = modifiedTime > oneHourAgo || hasInProgress;
+        const statusDot = isRecentlyActive
+          ? '<span class="status-dot status-active" title="Active (modified within 1 hour)"></span>'
+          : '<span class="status-dot status-inactive" title="Inactive"></span>';
+
+        // Format timestamps for display
+        const createdDisplay = session.createdAt ? formatDate(session.createdAt) : '';
+        const modifiedDisplay = formatDate(session.modifiedAt);
+        const timeDisplay = session.createdAt && createdDisplay !== modifiedDisplay
+          ? `Created ${createdDisplay} · Modified ${modifiedDisplay}`
+          : modifiedDisplay;
+
+        // Build tooltip
+        const tooltip = [timeDisplay, gitBranch ? `Branch: ${gitBranch}` : ''].filter(Boolean).join(' | ');
+
         return `
-          <button onclick="fetchTasks('${session.id}')" class="session-item ${isActive ? 'active' : ''}">
+          <button onclick="fetchTasks('${session.id}')" class="session-item ${isActive ? 'active' : ''}" title="${tooltip}">
             <div class="session-name">
               <span>${escapeHtml(primaryName)}</span>
+              ${statusDot}
               ${hasInProgress ? '<span class="pulse"></span>' : ''}
             </div>
             ${secondaryName ? `<div class="session-secondary">${escapeHtml(secondaryName)}</div>` : ''}
+            ${gitBranch ? `<div class="session-branch">${gitBranch}</div>` : ''}
             <div class="session-progress">
               <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
               <span class="progress-text">${session.completed}/${total}</span>
@@ -1275,9 +2035,33 @@
       if (!session) return;
 
       const displayName = session.name || currentSessionId;
-      sessionTitle.textContent = displayName;
-      const projectName = session.project ? session.project.split('/').pop() : null;
-      sessionMeta.textContent = `${currentTasks.length} tasks${projectName ? ' · ' + projectName : ''} · ${formatDate(session.modifiedAt)}`;
+
+      // Create header with edit and delete buttons
+      sessionTitle.innerHTML = `
+        <span style="flex: 1;">${escapeHtml(displayName)}</span>
+        <button class="icon-btn" onclick="editSessionMetadata('${session.id}')" title="Edit session name and description">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="icon-btn icon-btn-danger" onclick="deleteAllSessionTasks('${session.id}')" title="Delete all tasks in this session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
+      `;
+
+      // Build meta text with project path and description
+      const metaParts = [`${currentTasks.length} tasks`];
+      if (session.project) {
+        metaParts.push(`Project: ${session.project}`);
+      }
+      if (session.description) {
+        metaParts.push(session.description);
+      }
+      metaParts.push(formatDate(session.modifiedAt));
+      sessionMeta.innerHTML = metaParts.join(' · ');
 
       const completed = currentTasks.filter(t => t.status === 'completed').length;
       const percent = currentTasks.length > 0 ? Math.round((completed / currentTasks.length) * 100) : 0;
@@ -1289,15 +2073,25 @@
       renderSessions();
     }
 
-    function renderTaskCard(task) {
+    function renderTaskCard(task, position) {
       const isBlocked = task.blockedBy && task.blockedBy.length > 0;
       const taskId = viewMode === 'all' ? `${task.sessionId?.slice(0,4)}-${task.id}` : task.id;
       const sessionLabel = viewMode === 'all' && task.sessionName ? task.sessionName : null;
       const statusClass = task.status.replace('_', '-');
+      const actualSessionId = task.sessionId || currentSessionId;
 
       return `
-        <div onclick="showTaskDetail('${task.id}', '${task.sessionId || ''}')" class="task-card ${statusClass} ${isBlocked ? 'blocked' : ''}">
+        <div
+          draggable="true"
+          data-task-id="${task.id}"
+          data-session-id="${actualSessionId}"
+          data-current-status="${task.status}"
+          data-is-blocked="${isBlocked}"
+          data-position="${position}"
+          onclick="showTaskDetail('${task.id}', '${actualSessionId}')"
+          class="task-card ${statusClass} ${isBlocked ? 'blocked' : ''}">
           <div class="task-id">
+            <span style="font-weight: 600; color: var(--accent);">${position}.</span>
             <span>#${taskId}</span>
             ${isBlocked ? '<span class="task-badge blocked">Blocked</span>' : ''}
           </div>
@@ -1311,29 +2105,440 @@
     }
 
     function renderKanban() {
-      const pending = currentTasks.filter(t => t.status === 'pending');
-      const inProgress = currentTasks.filter(t => t.status === 'in_progress');
-      const completed = currentTasks.filter(t => t.status === 'completed');
+      // Sort by order (or by task ID if order doesn't exist)
+      const sortByOrder = (tasks) => {
+        return tasks.sort((a, b) => {
+          const orderA = a.order !== undefined ? a.order : parseInt(a.id);
+          const orderB = b.order !== undefined ? b.order : parseInt(b.id);
+          return orderA - orderB;
+        });
+      };
+
+      const pending = sortByOrder(currentTasks.filter(t => t.status === 'pending'));
+      const inProgress = sortByOrder(currentTasks.filter(t => t.status === 'in_progress'));
+      const completed = sortByOrder(currentTasks.filter(t => t.status === 'completed'));
 
       pendingCount.textContent = pending.length;
       inProgressCount.textContent = inProgress.length;
       completedCount.textContent = completed.length;
 
       pendingTasks.innerHTML = pending.length > 0
-        ? pending.map(renderTaskCard).join('')
+        ? pending.map((task, index) => renderTaskCard(task, index + 1)).join('')
         : '<div class="column-empty">No pending tasks</div>';
 
       inProgressTasks.innerHTML = inProgress.length > 0
-        ? inProgress.map(renderTaskCard).join('')
+        ? inProgress.map((task, index) => renderTaskCard(task, index + 1)).join('')
         : '<div class="column-empty">No active tasks</div>';
 
       completedTasks.innerHTML = completed.length > 0
-        ? completed.map(renderTaskCard).join('')
+        ? completed.map((task, index) => renderTaskCard(task, index + 1)).join('')
         : '<div class="column-empty">No completed tasks</div>';
+
+      // Setup drag and drop
+      setupDragAndDrop();
     }
 
-    function showTaskDetail(taskId, sessionId = null) {
-      const task = currentTasks.find(t => t.id === taskId && (!sessionId || t.sessionId === sessionId));
+    function setupDragAndDrop() {
+      const taskCards = document.querySelectorAll('.task-card');
+      const dropZones = document.querySelectorAll('.column-tasks');
+
+      // Setup drag events on task cards
+      taskCards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+      });
+
+      // Setup drop zones
+      dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handleDragOver);
+        zone.addEventListener('dragleave', handleDragLeave);
+        zone.addEventListener('drop', handleDrop);
+      });
+    }
+
+    let draggedElement = null;
+    let isDragging = false;
+
+    function handleDragStart(e) {
+      isDragging = true;
+      draggedElement = e.currentTarget;
+      draggedElement.classList.add('dragging');
+
+      // Set drag data
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', draggedElement.innerHTML);
+
+      // Prevent click event from firing
+      setTimeout(() => {
+        draggedElement.style.opacity = '0.5';
+      }, 0);
+    }
+
+    function handleDragEnd(e) {
+      e.currentTarget.classList.remove('dragging');
+      e.currentTarget.style.opacity = '';
+      draggedElement = null;
+
+      // Remove drag-over class from all zones
+      document.querySelectorAll('.column-tasks').forEach(zone => {
+        zone.classList.remove('drag-over');
+      });
+
+      // Reset drag flag after a short delay to prevent click event
+      setTimeout(() => {
+        isDragging = false;
+      }, 100);
+    }
+
+    function handleDragOver(e) {
+      if (!draggedElement) return;
+
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+
+      const dropZone = e.currentTarget;
+      if (!dropZone.classList.contains('drag-over')) {
+        dropZone.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      const dropZone = e.currentTarget;
+
+      // Only remove if we're leaving the drop zone itself, not a child
+      if (e.target === dropZone) {
+        dropZone.classList.remove('drag-over');
+      }
+    }
+
+    async function handleDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const dropZone = e.currentTarget;
+      dropZone.classList.remove('drag-over');
+
+      if (!draggedElement) return;
+
+      // Get task info from dragged element
+      const taskId = draggedElement.dataset.taskId;
+      const sessionId = draggedElement.dataset.sessionId;
+      const currentStatus = draggedElement.dataset.currentStatus;
+      const isBlocked = draggedElement.dataset.isBlocked === 'true';
+
+      // Determine new status from drop zone
+      let newStatus = 'pending';
+      if (dropZone.id === 'in-progress-tasks') {
+        newStatus = 'in_progress';
+      } else if (dropZone.id === 'completed-tasks') {
+        newStatus = 'completed';
+      }
+
+      // Handle reordering within the same column
+      if (currentStatus === newStatus) {
+        await handleReorder(e, dropZone, taskId, sessionId, newStatus);
+        return;
+      }
+
+      // Validate: can't move blocked tasks to in_progress
+      if (newStatus === 'in_progress' && isBlocked) {
+        const task = currentTasks.find(t => t.id === taskId && (!sessionId || t.sessionId === sessionId));
+        if (task) {
+          showBlockedTaskModal(task);
+        }
+        return;
+      }
+
+      // Update task status via API
+      try {
+        const res = await fetch(`/api/tasks/${sessionId}/${taskId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          await refreshCurrentView();
+        } else {
+          const error = await res.json();
+          alert('Failed to update task: ' + (error.error || 'Unknown error'));
+          await refreshCurrentView(); // Refresh to restore original state
+        }
+      } catch (error) {
+        console.error('Failed to update task:', error);
+        alert('Failed to update task');
+        await refreshCurrentView();
+      }
+    }
+
+    async function handleReorder(e, dropZone, draggedTaskId, sessionId, status) {
+      // Get all task cards in this column (excluding the dragged one)
+      const taskCards = Array.from(dropZone.querySelectorAll('.task-card:not(.dragging)'));
+
+      // Find the drop position by checking mouse position against card boundaries
+      let dropIndex = taskCards.length; // Default to end
+
+      for (let i = 0; i < taskCards.length; i++) {
+        const card = taskCards[i];
+        const rect = card.getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+
+        if (e.clientY < midpoint) {
+          dropIndex = i;
+          break;
+        }
+      }
+
+      // Get all tasks in this status, sorted by current order
+      const tasksInStatus = currentTasks.filter(t => t.status === status);
+      const sortedTasks = tasksInStatus.sort((a, b) => {
+        const orderA = a.order !== undefined ? a.order : parseInt(a.id);
+        const orderB = b.order !== undefined ? b.order : parseInt(b.id);
+        return orderA - orderB;
+      });
+
+      // Find the dragged task
+      const draggedTask = sortedTasks.find(t => t.id === draggedTaskId);
+      if (!draggedTask) return;
+
+      // Remove dragged task from array
+      const currentIndex = sortedTasks.indexOf(draggedTask);
+      sortedTasks.splice(currentIndex, 1);
+
+      // Insert at new position
+      sortedTasks.splice(dropIndex, 0, draggedTask);
+
+      // Validate: Check if reorder creates dependency conflicts
+      const conflicts = [];
+      const seenPairs = new Set(); // Track task pairs to avoid duplicates
+
+      // Case 1: Task is being moved BEFORE its dependencies (blockedBy)
+      if (draggedTask.blockedBy && draggedTask.blockedBy.length > 0) {
+        for (const depId of draggedTask.blockedBy) {
+          const depTask = sortedTasks.find(t => t.id === depId);
+          if (!depTask) continue; // Dependency not in this column
+
+          const draggedNewIndex = sortedTasks.indexOf(draggedTask);
+          const depIndex = sortedTasks.indexOf(depTask);
+
+          // If dragged task comes before its dependency, that's a conflict
+          if (draggedNewIndex < depIndex) {
+            const pairKey = `${draggedTask.id}-${depTask.id}`;
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+              conflicts.push({
+                type: 'blockedBy',
+                task: depTask
+              });
+            }
+          }
+        }
+      }
+
+      // Case 2: Task is being moved AFTER tasks it blocks
+      if (draggedTask.blocks && draggedTask.blocks.length > 0) {
+        for (const blockedId of draggedTask.blocks) {
+          const blockedTask = sortedTasks.find(t => t.id === blockedId);
+          if (!blockedTask) continue; // Blocked task not in this column
+
+          const draggedNewIndex = sortedTasks.indexOf(draggedTask);
+          const blockedIndex = sortedTasks.indexOf(blockedTask);
+
+          // If dragged task comes after task it blocks, that's a conflict
+          if (draggedNewIndex > blockedIndex) {
+            const pairKey = `${draggedTask.id}-${blockedTask.id}`;
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+              conflicts.push({
+                type: 'blocks',
+                task: blockedTask
+              });
+            }
+          }
+        }
+      }
+
+      // Case 3: Other tasks depend on this task (have it in their blockedBy), and would now come BEFORE it
+      for (const task of sortedTasks) {
+        if (task.id === draggedTask.id) continue; // Skip self
+        if (!task.blockedBy || task.blockedBy.length === 0) continue;
+
+        // Does this task depend on the dragged task?
+        if (task.blockedBy.includes(draggedTask.id)) {
+          const draggedNewIndex = sortedTasks.indexOf(draggedTask);
+          const dependentIndex = sortedTasks.indexOf(task);
+
+          // If dependent task comes BEFORE the dragged task, that's a conflict
+          if (dependentIndex < draggedNewIndex) {
+            const pairKey = `${draggedTask.id}-${task.id}`;
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+              conflicts.push({
+                type: 'dependsOn',
+                task: task
+              });
+            }
+          }
+        }
+      }
+
+      // Case 4: Other tasks block this task (have it in their blocks), and dragged task would now come BEFORE them
+      for (const task of sortedTasks) {
+        if (task.id === draggedTask.id) continue; // Skip self
+        if (!task.blocks || task.blocks.length === 0) continue;
+
+        // Does this task block the dragged task?
+        if (task.blocks.includes(draggedTask.id)) {
+          const draggedNewIndex = sortedTasks.indexOf(draggedTask);
+          const blockerIndex = sortedTasks.indexOf(task);
+
+          // If dragged task comes BEFORE the task that blocks it, that's a conflict
+          if (draggedNewIndex < blockerIndex) {
+            const pairKey = `${draggedTask.id}-${task.id}`;
+            if (!seenPairs.has(pairKey)) {
+              seenPairs.add(pairKey);
+              conflicts.push({
+                type: 'blockedByOther',
+                task: task
+              });
+            }
+          }
+        }
+      }
+
+      // If conflicts exist, show warning and ask for confirmation
+      if (conflicts.length > 0) {
+        const blockedByConflicts = conflicts.filter(c => c.type === 'blockedBy');
+        const blocksConflicts = conflicts.filter(c => c.type === 'blocks');
+        const dependsOnConflicts = conflicts.filter(c => c.type === 'dependsOn');
+        const blockedByOtherConflicts = conflicts.filter(c => c.type === 'blockedByOther');
+
+        let message = '';
+
+        if (blockedByConflicts.length > 0) {
+          const list = blockedByConflicts.map(c => `<li><strong>#${c.task.id}</strong> - ${escapeHtml(c.task.subject)}</li>`).join('');
+          message += `<p style="margin-bottom: 12px;">Task <strong>#${draggedTask.id}</strong> is blocked by:</p>
+                      <ul style="margin: 0 0 12px 20px; padding: 0;">${list}</ul>
+                      <p style="margin-bottom: 16px; color: var(--text-secondary);">But you're moving it to position <strong>${dropIndex + 1}</strong>, <span style="color: #f59e0b;">BEFORE</span> its dependencies.</p>`;
+        }
+
+        if (blocksConflicts.length > 0) {
+          const list = blocksConflicts.map(c => `<li><strong>#${c.task.id}</strong> - ${escapeHtml(c.task.subject)}</li>`).join('');
+          message += `<p style="margin-bottom: 12px;">Task <strong>#${draggedTask.id}</strong> blocks:</p>
+                      <ul style="margin: 0 0 12px 20px; padding: 0;">${list}</ul>
+                      <p style="margin-bottom: 16px; color: var(--text-secondary);">But you're moving it to position <strong>${dropIndex + 1}</strong>, <span style="color: #f59e0b;">AFTER</span> the tasks it should block.</p>`;
+        }
+
+        if (dependsOnConflicts.length > 0) {
+          const list = dependsOnConflicts.map(c => `<li><strong>#${c.task.id}</strong> - ${escapeHtml(c.task.subject)}</li>`).join('');
+          message += `<p style="margin-bottom: 12px;">These tasks depend on task <strong>#${draggedTask.id}</strong>:</p>
+                      <ul style="margin: 0 0 12px 20px; padding: 0;">${list}</ul>
+                      <p style="margin-bottom: 16px; color: var(--text-secondary);">But you're moving it to position <strong>${dropIndex + 1}</strong>, <span style="color: #f59e0b;">AFTER</span> tasks that depend on it.</p>`;
+        }
+
+        if (blockedByOtherConflicts.length > 0) {
+          const list = blockedByOtherConflicts.map(c => `<li><strong>#${c.task.id}</strong> - ${escapeHtml(c.task.subject)}</li>`).join('');
+          message += `<p style="margin-bottom: 12px;">Task <strong>#${draggedTask.id}</strong> is blocked by:</p>
+                      <ul style="margin: 0 0 12px 20px; padding: 0;">${list}</ul>
+                      <p style="margin-bottom: 16px; color: var(--text-secondary);">But you're moving it to position <strong>${dropIndex + 1}</strong>, <span style="color: #f59e0b;">BEFORE</span> tasks that should block it.</p>`;
+        }
+
+        message += `<p style="margin: 0; font-size: 13px; color: var(--text-muted);">This creates a logical conflict. Do you want to continue?</p>`;
+
+        // Show modal and store data for later
+        showDependencyConflictModal(message, { sortedTasks, sessionId });
+        return;
+      }
+
+      // No conflicts - proceed with reorder
+      try {
+        for (let i = 0; i < sortedTasks.length; i++) {
+          const task = sortedTasks[i];
+          const newOrder = i;
+
+          // Only update if order changed
+          const currentOrder = task.order !== undefined ? task.order : parseInt(task.id);
+          if (currentOrder !== newOrder) {
+            const taskSessionId = task.sessionId || sessionId;
+            await fetch(`/api/tasks/${taskSessionId}/${task.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: newOrder })
+            });
+          }
+        }
+
+        await refreshCurrentView();
+      } catch (error) {
+        console.error('Failed to reorder tasks:', error);
+        alert('Failed to reorder tasks');
+        await refreshCurrentView();
+      }
+    }
+
+    function getAvailableTasksOptions(currentTaskId = null) {
+      // Get all tasks sorted by status and position
+      const sortByOrder = (tasks) => {
+        return tasks.sort((a, b) => {
+          const orderA = a.order !== undefined ? a.order : parseInt(a.id);
+          const orderB = b.order !== undefined ? b.order : parseInt(b.id);
+          return orderA - orderB;
+        });
+      };
+
+      const pending = sortByOrder(currentTasks.filter(t => t.status === 'pending' && t.id !== currentTaskId));
+      const inProgress = sortByOrder(currentTasks.filter(t => t.status === 'in_progress' && t.id !== currentTaskId));
+      const completed = sortByOrder(currentTasks.filter(t => t.status === 'completed' && t.id !== currentTaskId));
+
+      // Build options grouped by status
+      let options = '';
+
+      if (pending.length > 0) {
+        options += '<optgroup label="Pending">';
+        pending.forEach((t, idx) => {
+          options += `<option value="${t.id}">#${t.id} - ${escapeHtml(t.subject)}</option>`;
+        });
+        options += '</optgroup>';
+      }
+
+      if (inProgress.length > 0) {
+        options += '<optgroup label="In Progress">';
+        inProgress.forEach((t, idx) => {
+          options += `<option value="${t.id}">#${t.id} - ${escapeHtml(t.subject)}</option>`;
+        });
+        options += '</optgroup>';
+      }
+
+      if (completed.length > 0) {
+        options += '<optgroup label="Completed">';
+        completed.forEach((t, idx) => {
+          options += `<option value="${t.id}">#${t.id} - ${escapeHtml(t.subject)}</option>`;
+        });
+        options += '</optgroup>';
+      }
+
+      return options;
+    }
+
+    async function showTaskDetail(taskId, sessionId = null) {
+      // Don't open detail panel if we're dragging
+      if (isDragging) return;
+
+      let task = currentTasks.find(t => t.id === taskId && (!sessionId || t.sessionId === sessionId));
+
+      // If task not found in currentTasks, fetch it from the session
+      if (!task && sessionId && sessionId !== 'undefined') {
+        try {
+          const res = await fetch(`/api/sessions/${sessionId}`);
+          const tasks = await res.json();
+          task = tasks.find(t => t.id === taskId);
+          if (!task) return;
+        } catch (error) {
+          console.error('Failed to fetch task:', error);
+          return;
+        }
+      }
+
       if (!task) return;
 
       detailPanel.classList.add('visible');
@@ -1344,14 +2549,46 @@
         pending: '<span class="detail-status pending"><span class="dot"></span>Pending</span>'
       };
 
+      const isBlocked = task.blockedBy && task.blockedBy.length > 0;
+      const actualSessionId = task.sessionId || sessionId || currentSessionId;
+
       detailContent.innerHTML = `
         <div class="detail-section">
-          <div class="detail-label">Task #${task.id}</div>
-          <h2 class="detail-title">${escapeHtml(task.subject)}</h2>
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="flex: 1;">
+              <div class="detail-label">Task #${task.id}</div>
+              <h2 id="task-title-display" class="detail-title">${escapeHtml(task.subject)}</h2>
+              <textarea id="task-title-edit" class="note-input" style="display: none; margin-top: 8px;">${escapeHtml(task.subject)}</textarea>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button id="edit-task-btn" class="icon-btn" title="Edit task (E)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button id="cancel-edit-btn" class="icon-btn" title="Cancel edit (Esc)" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+              <button id="delete-task-btn" class="icon-btn" title="Delete task (D)" style="color: #ef4444; border-color: #ef4444;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="detail-section">
-          ${statusLabels[task.status] || statusLabels.pending}
+          <div class="detail-label">Status</div>
+          <select id="status-select" class="filter-dropdown" style="width: 200px;" onchange="updateTaskStatus('${task.id}', '${actualSessionId}', this.value)">
+            <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+            <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''} ${isBlocked ? 'disabled' : ''}>In Progress</option>
+            <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+          </select>
+          ${isBlocked && task.status !== 'in_progress' ? '<div style="font-size: 10px; color: var(--warning); margin-top: 4px;">Cannot start while blocked</div>' : ''}
         </div>
 
         ${task.activeForm && task.status === 'in_progress' ? `
@@ -1362,37 +2599,65 @@
           </div>
         ` : ''}
 
-        ${task.blockedBy && task.blockedBy.length > 0 ? `
-          <div class="detail-section">
-            <div class="detail-box blocked">
-              <strong>Blocked by:</strong> ${task.blockedBy.map(id => '#' + id).join(', ')}
-            </div>
+        <div class="detail-section">
+          <div class="detail-label">Blocked By <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(optional)</span></div>
+          <div id="blocked-by-display" class="detail-desc">
+            ${task.blockedBy && task.blockedBy.length > 0
+              ? `<div class="detail-box blocked"><strong>Blocked by:</strong> ${task.blockedBy.map(id => '#' + id).join(', ')}</div>`
+              : '<em style="color: var(--text-muted); font-size: 13px;">No dependencies</em>'}
           </div>
-        ` : ''}
+          <select
+            id="blocked-by-edit"
+            multiple
+            class="form-input"
+            style="display: none; height: 120px;"
+          >
+            ${getAvailableTasksOptions(task.id)}
+          </select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: none;" id="blocked-by-help">
+            Hold Ctrl/Cmd to select multiple tasks
+          </div>
+        </div>
 
-        ${task.blocks && task.blocks.length > 0 ? `
-          <div class="detail-section">
-            <div class="detail-box blocks">
-              <strong>Blocks:</strong> ${task.blocks.map(id => '#' + id).join(', ')}
-            </div>
+        <div class="detail-section">
+          <div class="detail-label">Blocks <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(optional)</span></div>
+          <div id="blocks-display" class="detail-desc">
+            ${task.blocks && task.blocks.length > 0
+              ? `<div class="detail-box blocks"><strong>Blocks:</strong> ${task.blocks.map(id => '#' + id).join(', ')}</div>`
+              : '<em style="color: var(--text-muted); font-size: 13px;">No tasks blocked</em>'}
           </div>
-        ` : ''}
+          <select
+            id="blocks-edit"
+            multiple
+            class="form-input"
+            style="display: none; height: 120px;"
+          >
+            ${getAvailableTasksOptions(task.id)}
+          </select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: none;" id="blocks-help">
+            Hold Ctrl/Cmd to select multiple tasks
+          </div>
+        </div>
 
-        ${task.description ? `
-          <div class="detail-section">
-            <div class="detail-label">Description</div>
-            <div class="detail-desc">${DOMPurify.sanitize(marked.parse(task.description))}</div>
-          </div>
-        ` : ''}
+        <div class="detail-section">
+          <div class="detail-label">Description</div>
+          <div id="task-desc-display" class="detail-desc">${task.description ? DOMPurify.sanitize(marked.parse(task.description)) : '<em style="color: var(--text-muted);">No description</em>'}</div>
+          <textarea id="task-desc-edit" class="note-input" style="display: none; min-height: 100px;">${escapeHtml(task.description || '')}</textarea>
+        </div>
 
         <div class="detail-section note-section">
           <div class="detail-label">Add Note</div>
-          <form class="note-form" onsubmit="addNote(event, '${task.id}', '${task.sessionId || currentSessionId}')">
+          <form class="note-form" onsubmit="addNote(event, '${task.id}', '${actualSessionId}')">
             <textarea id="note-input" class="note-input" placeholder="Add a note for Claude..." rows="3"></textarea>
             <button type="submit" class="note-submit">Add Note</button>
           </form>
         </div>
       `;
+
+      // Setup button handlers
+      document.getElementById('edit-task-btn').onclick = () => toggleEditMode(task.id, actualSessionId);
+      document.getElementById('cancel-edit-btn').onclick = () => cancelEditMode(task.id, actualSessionId);
+      document.getElementById('delete-task-btn').onclick = () => deleteTask(task.id, actualSessionId);
     }
 
     async function addNote(event, taskId, sessionId) {
@@ -1428,11 +2693,495 @@
       detailPanel.classList.remove('visible');
     }
 
+    let isEditMode = false;
+    let currentEditTaskId = null;
+    let currentEditSessionId = null;
+
+    async function toggleEditMode(taskId, sessionId) {
+      const titleDisplay = document.getElementById('task-title-display');
+      const titleEdit = document.getElementById('task-title-edit');
+      const descDisplay = document.getElementById('task-desc-display');
+      const descEdit = document.getElementById('task-desc-edit');
+      const blockedByDisplay = document.getElementById('blocked-by-display');
+      const blockedByEdit = document.getElementById('blocked-by-edit');
+      const blockedByHelp = document.getElementById('blocked-by-help');
+      const blocksDisplay = document.getElementById('blocks-display');
+      const blocksEdit = document.getElementById('blocks-edit');
+      const blocksHelp = document.getElementById('blocks-help');
+      const editBtn = document.getElementById('edit-task-btn');
+      const cancelBtn = document.getElementById('cancel-edit-btn');
+      const deleteBtn = document.getElementById('delete-task-btn');
+
+      if (!isEditMode) {
+        // Enter edit mode
+        titleDisplay.style.display = 'none';
+        titleEdit.style.display = 'block';
+        descDisplay.style.display = 'none';
+        descEdit.style.display = 'block';
+        blockedByDisplay.style.display = 'none';
+        blockedByEdit.style.display = 'block';
+        blockedByHelp.style.display = 'block';
+        blocksDisplay.style.display = 'none';
+        blocksEdit.style.display = 'block';
+        blocksHelp.style.display = 'block';
+
+        // Set selected options in dropdowns based on current task values
+        const task = currentTasks.find(t => t.id === taskId);
+        if (task) {
+          // Set blocked-by selections
+          Array.from(blockedByEdit.options).forEach(option => {
+            option.selected = task.blockedBy && task.blockedBy.includes(option.value);
+          });
+
+          // Set blocks selections
+          Array.from(blocksEdit.options).forEach(option => {
+            option.selected = task.blocks && task.blocks.includes(option.value);
+          });
+        }
+
+        editBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 13l4 4L19 7"/>
+          </svg>
+        `;
+        editBtn.title = 'Save changes';
+        cancelBtn.style.display = 'flex';
+        deleteBtn.style.display = 'none';
+        titleEdit.focus();
+        isEditMode = true;
+        currentEditTaskId = taskId;
+        currentEditSessionId = sessionId;
+      } else {
+        // Save and exit edit mode
+        const newSubject = titleEdit.value.trim();
+        const newDescription = descEdit.value.trim();
+
+        if (!newSubject) {
+          alert('Subject cannot be empty');
+          return;
+        }
+
+        // Get selected values from multi-select dropdowns
+        const blockedBy = Array.from(blockedByEdit.selectedOptions).map(opt => opt.value);
+        const blocks = Array.from(blocksEdit.selectedOptions).map(opt => opt.value);
+
+        try {
+          const res = await fetch(`/api/tasks/${sessionId}/${taskId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subject: newSubject,
+              description: newDescription,
+              blockedBy: blockedBy.length > 0 ? blockedBy : undefined,
+              blocks: blocks.length > 0 ? blocks : undefined
+            })
+          });
+
+          if (res.ok) {
+            await refreshCurrentView();
+            showTaskDetail(taskId, sessionId);
+            isEditMode = false;
+            currentEditTaskId = null;
+            currentEditSessionId = null;
+          } else {
+            const error = await res.json();
+            alert('Failed to update task: ' + (error.error || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Failed to update task:', error);
+          alert('Failed to update task');
+        }
+      }
+    }
+
+    function cancelEditMode(taskId, sessionId) {
+      isEditMode = false;
+      currentEditTaskId = null;
+      currentEditSessionId = null;
+      showTaskDetail(taskId, sessionId);
+    }
+
+    async function updateTaskStatus(taskId, sessionId, newStatus) {
+      try {
+        const res = await fetch(`/api/tasks/${sessionId}/${taskId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          await refreshCurrentView();
+          showTaskDetail(taskId, sessionId);
+        } else {
+          const error = await res.json();
+          alert('Failed to update status: ' + (error.error || 'Unknown error'));
+          // Reset dropdown
+          document.getElementById('status-select').value = currentTasks.find(t => t.id === taskId).status;
+        }
+      } catch (error) {
+        console.error('Failed to update status:', error);
+        alert('Failed to update status');
+      }
+    }
+
+    let deleteTaskId = null;
+    let deleteSessionId = null;
+
+    // Dependency conflict modal state
+    let pendingReorderData = null;
+
+    function showBlockedTaskModal(task) {
+      const messageDiv = document.getElementById('blocked-task-message');
+
+      const blockedByList = task.blockedBy.map(id => {
+        const blockingTask = currentTasks.find(t => t.id === id);
+        if (blockingTask) {
+          return `<li><strong>#${blockingTask.id}</strong> - ${escapeHtml(blockingTask.subject)}</li>`;
+        }
+        return `<li><strong>#${id}</strong></li>`;
+      }).join('');
+
+      messageDiv.innerHTML = `
+        <p style="margin-bottom: 12px;">Task <strong>#${task.id}</strong> - ${escapeHtml(task.subject)} is currently blocked by:</p>
+        <ul style="margin: 0 0 16px 20px; padding: 0;">${blockedByList}</ul>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">
+          Please resolve these dependencies before moving this task to <strong>In Progress</strong>.
+        </p>
+      `;
+
+      const modal = document.getElementById('blocked-task-modal');
+      modal.classList.add('visible');
+
+      // Handle ESC key
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeBlockedTaskModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeBlockedTaskModal() {
+      const modal = document.getElementById('blocked-task-modal');
+      modal.classList.remove('visible');
+    }
+
+    function showDependencyConflictModal(message, reorderData) {
+      pendingReorderData = reorderData;
+
+      const messageDiv = document.getElementById('dependency-conflict-message');
+      messageDiv.innerHTML = message;
+
+      const modal = document.getElementById('dependency-conflict-modal');
+      modal.classList.add('visible');
+
+      // Handle ESC key
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeDependencyConflictModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeDependencyConflictModal(cancelled = true) {
+      const modal = document.getElementById('dependency-conflict-modal');
+      modal.classList.remove('visible');
+
+      // If user cancelled (not confirmed), refresh to restore original order
+      if (cancelled && pendingReorderData) {
+        refreshCurrentView();
+      }
+
+      pendingReorderData = null;
+    }
+
+    async function confirmReorder() {
+      if (!pendingReorderData) return;
+
+      const { sortedTasks, sessionId } = pendingReorderData;
+
+      // Close without refreshing (not cancelled)
+      const modal = document.getElementById('dependency-conflict-modal');
+      modal.classList.remove('visible');
+      pendingReorderData = null;
+
+      // Update order for all tasks in this column
+      try {
+        for (let i = 0; i < sortedTasks.length; i++) {
+          const task = sortedTasks[i];
+          const newOrder = i;
+
+          // Only update if order changed
+          const currentOrder = task.order !== undefined ? task.order : parseInt(task.id);
+          if (currentOrder !== newOrder) {
+            const taskSessionId = task.sessionId || sessionId;
+            await fetch(`/api/tasks/${taskSessionId}/${task.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: newOrder })
+            });
+          }
+        }
+
+        await refreshCurrentView();
+      } catch (error) {
+        console.error('Failed to reorder tasks:', error);
+        alert('Failed to reorder tasks');
+        await refreshCurrentView();
+      }
+    }
+
+    function deleteTask(taskId, sessionId) {
+      const task = currentTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      deleteTaskId = taskId;
+      deleteSessionId = sessionId;
+
+      const message = document.getElementById('delete-confirm-message');
+      message.textContent = `Delete task "${task.subject}"? This cannot be undone.`;
+
+      const modal = document.getElementById('delete-confirm-modal');
+      modal.classList.add('visible');
+
+      // Handle ESC key
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeDeleteConfirmModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeDeleteConfirmModal() {
+      const modal = document.getElementById('delete-confirm-modal');
+      modal.classList.remove('visible');
+      deleteTaskId = null;
+      deleteSessionId = null;
+    }
+
+    async function confirmDelete() {
+      if (!deleteTaskId || !deleteSessionId) return;
+
+      const taskId = deleteTaskId;
+      const sessionId = deleteSessionId;
+
+      closeDeleteConfirmModal();
+
+      try {
+        const res = await fetch(`/api/tasks/${sessionId}/${taskId}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          closeDetailPanel();
+          await refreshCurrentView();
+        } else {
+          const error = await res.json();
+          alert('Failed to delete task: ' + (error.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+        alert('Failed to delete task');
+      }
+    }
+
+    let newTaskStatus = 'pending';
+
+    function createTask(status = 'pending') {
+      newTaskStatus = status;
+
+      // Clear the form
+      document.getElementById('task-subject-input').value = '';
+      document.getElementById('task-description-input').value = '';
+
+      // Populate and clear dependency dropdowns
+      const blockedBySelect = document.getElementById('task-blocked-by-input');
+      const blocksSelect = document.getElementById('task-blocks-input');
+
+      // Populate options
+      const options = getAvailableTasksOptions();
+      blockedBySelect.innerHTML = options;
+      blocksSelect.innerHTML = options;
+
+      // Clear selections
+      blockedBySelect.selectedIndex = -1;
+      blocksSelect.selectedIndex = -1;
+
+      // Show the modal
+      const modal = document.getElementById('create-task-modal');
+      modal.classList.add('visible');
+
+      // Focus the subject input
+      setTimeout(() => document.getElementById('task-subject-input').focus(), 100);
+
+      // Handle keyboard shortcuts
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeCreateTaskModal();
+          document.removeEventListener('keydown', keyHandler);
+        } else if (e.key === 'Enter') {
+          // Allow Enter in textarea for new lines, Cmd/Ctrl+Enter or plain Enter elsewhere to save
+          if (e.target.tagName === 'TEXTAREA' && !e.metaKey && !e.ctrlKey) {
+            return; // Let textarea handle Enter normally
+          }
+          e.preventDefault();
+          saveNewTask();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeCreateTaskModal() {
+      const modal = document.getElementById('create-task-modal');
+      modal.classList.remove('visible');
+    }
+
+    function showHelpModal() {
+      const modal = document.getElementById('help-modal');
+      modal.classList.add('visible');
+
+      // Handle keyboard shortcuts
+      const keyHandler = (e) => {
+        if (e.key === 'Escape' || e.key === '?') {
+          e.preventDefault();
+          closeHelpModal();
+          document.removeEventListener('keydown', keyHandler);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }
+
+    function closeHelpModal() {
+      const modal = document.getElementById('help-modal');
+      modal.classList.remove('visible');
+    }
+
+    async function saveNewTask() {
+      const subjectInput = document.getElementById('task-subject-input');
+      const descInput = document.getElementById('task-description-input');
+      const blockedBySelect = document.getElementById('task-blocked-by-input');
+      const blocksSelect = document.getElementById('task-blocks-input');
+
+      const subject = subjectInput.value.trim();
+      if (!subject) {
+        alert('Task subject is required');
+        subjectInput.focus();
+        return;
+      }
+
+      const description = descInput.value.trim();
+      const sessionId = currentSessionId;
+
+      if (!sessionId) {
+        alert('No session selected. Please select a session first.');
+        return;
+      }
+
+      // Get selected values from dropdowns
+      const blockedBy = Array.from(blockedBySelect.selectedOptions).map(opt => opt.value);
+      const blocks = Array.from(blocksSelect.selectedOptions).map(opt => opt.value);
+
+      // Build request body
+      const taskData = {
+        subject,
+        description,
+        status: newTaskStatus
+      };
+
+      // Only include blockedBy/blocks if they have values
+      if (blockedBy.length > 0) {
+        taskData.blockedBy = blockedBy;
+      }
+      if (blocks.length > 0) {
+        taskData.blocks = blocks;
+      }
+
+      try {
+        const res = await fetch(`/api/tasks/${sessionId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(taskData)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          closeCreateTaskModal();
+          await refreshCurrentView();
+          showTaskDetail(data.task.id, sessionId);
+        } else {
+          const error = await res.json();
+          alert('Failed to create task: ' + (error.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Failed to create task:', error);
+        alert('Failed to create task');
+      }
+    }
+
+    async function refreshCurrentView() {
+      if (viewMode === 'all') {
+        await showAllTasks();
+      } else if (currentSessionId) {
+        await fetchTasks(currentSessionId);
+      } else {
+        await fetchSessions();
+      }
+    }
+
     document.getElementById('close-detail').onclick = closeDetailPanel;
 
     document.addEventListener('keydown', (e) => {
+      // Ignore if typing in input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+      }
+
       if (e.key === 'Escape' && detailPanel.classList.contains('visible')) {
-        closeDetailPanel();
+        if (isEditMode && currentEditTaskId && currentEditSessionId) {
+          cancelEditMode(currentEditTaskId, currentEditSessionId);
+        } else {
+          closeDetailPanel();
+        }
+      }
+
+      if (detailPanel.classList.contains('visible') && !isEditMode) {
+        const titleEdit = document.getElementById('task-title-edit');
+        if (!titleEdit) return;
+
+        const taskId = titleEdit.closest('.detail-content')?.querySelector('.detail-label')?.textContent.match(/\d+/)?.[0];
+        if (!taskId) return;
+
+        const task = currentTasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        const sessionId = task.sessionId || currentSessionId;
+
+        if (e.key === 'e' || e.key === 'E') {
+          e.preventDefault();
+          toggleEditMode(taskId, sessionId);
+        } else if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          deleteTask(taskId, sessionId);
+        }
+      }
+
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        createTask();
+      }
+
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault();
+        showHelpModal();
       }
     });
 
@@ -1463,9 +3212,16 @@
 
         eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
+          console.log('[SSE] Event received:', data);
           if (data.type === 'update' || data.type === 'metadata-update') {
-            fetchSessions();
-            if (currentSessionId && data.sessionId === currentSessionId) {
+            console.log('[SSE] Calling fetchSessions()...');
+            fetchSessions().catch(err => {
+              console.error('[SSE] fetchSessions failed:', err);
+            });
+
+            // For metadata-update or matching sessionId, refresh current session view
+            if (currentSessionId && (data.type === 'metadata-update' || data.sessionId === currentSessionId)) {
+              console.log('[SSE] Refreshing current session view:', currentSessionId);
               fetchTasks(currentSessionId);
             }
           }
@@ -1496,6 +3252,12 @@
       sessionFilter = value;
       localStorage.setItem('sessionFilter', sessionFilter);
       renderSessions();
+    }
+
+    function changeSessionLimit(value) {
+      sessionLimit = value;
+      localStorage.setItem('sessionLimit', sessionLimit);
+      fetchSessions();
     }
 
     function filterByProject(project) {
@@ -1534,14 +3296,328 @@
 
     function loadPreferences() {
       document.getElementById('session-filter').value = sessionFilter;
+      document.getElementById('session-limit').value = sessionLimit;
     }
 
     // Init
     loadTheme();
     loadPreferences();
-    fetchSessions();
     setupEventSource();
-    setTimeout(showAllTasks, 500);
+
+    // Fetch sessions and show newest one by default
+    fetchSessions().then(() => {
+      if (sessions.length > 0) {
+        // Sessions are already sorted by newest first from API
+        fetchTasks(sessions[0].id);
+      } else {
+        showAllTasks();
+      }
+    });
   </script>
+
+  <!-- Edit Session Modal -->
+  <div id="edit-session-modal" class="modal-overlay" onclick="closeEditSessionModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Session</h3>
+        <button class="modal-close" onclick="closeEditSessionModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="session-name-input">Session Name</label>
+          <input
+            type="text"
+            id="session-name-input"
+            class="form-input"
+            placeholder="Enter a custom name for this session..."
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="session-description-input">Description</label>
+          <textarea
+            id="session-description-input"
+            class="form-input"
+            placeholder="Add a description (optional)..."
+          ></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditSessionModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSessionMetadata()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Task Modal -->
+  <div id="create-task-modal" class="modal-overlay" onclick="closeCreateTaskModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Task</h3>
+        <button class="modal-close" onclick="closeCreateTaskModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="task-subject-input">Task Subject *</label>
+          <input
+            type="text"
+            id="task-subject-input"
+            class="form-input"
+            placeholder="Enter task title..."
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="task-description-input">Description</label>
+          <textarea
+            id="task-description-input"
+            class="form-input"
+            placeholder="Add a description (optional)..."
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="task-blocked-by-input">Blocked By <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(optional)</span></label>
+          <select
+            id="task-blocked-by-input"
+            multiple
+            class="form-input"
+            style="height: 100px;"
+          >
+            <!-- Options will be populated when modal opens -->
+          </select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Hold Ctrl/Cmd to select multiple tasks
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="task-blocks-input">Blocks <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(optional)</span></label>
+          <select
+            id="task-blocks-input"
+            multiple
+            class="form-input"
+            style="height: 100px;"
+          >
+            <!-- Options will be populated when modal opens -->
+          </select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Hold Ctrl/Cmd to select multiple tasks
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCreateTaskModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewTask()">Create Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal-overlay" onclick="closeHelpModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Keyboard Shortcuts</h3>
+        <button class="modal-close" onclick="closeHelpModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display: grid; gap: 16px;">
+          <div>
+            <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Global</h4>
+            <table style="width: 100%; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">?</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Show keyboard shortcuts</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">N</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Create new task</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Esc</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Close panels or cancel</td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Task Actions</h4>
+            <table style="width: 100%; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">E</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Edit selected task</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">D</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Delete selected task</td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Drag & Drop</h4>
+            <table style="width: 100%; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);" colspan="2">
+                  <strong>Move to different column:</strong> Changes task status
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);" colspan="2">
+                  <strong>Reorder within same column:</strong> Changes task order (see position numbers)
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Dialogs</h4>
+            <table style="width: 100%; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Enter</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Save changes</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Cmd+Enter</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Save changes (in textarea)</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Esc</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Cancel and close</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeHelpModal()">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-confirm-modal" class="modal-overlay" onclick="closeDeleteConfirmModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete Task</h3>
+        <button class="modal-close" onclick="closeDeleteConfirmModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-confirm-message" style="margin: 0; color: var(--text-primary);"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmDelete()" style="background: #ef4444; border-color: #ef4444;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete All Session Tasks Confirmation Modal -->
+  <div id="delete-session-tasks-modal" class="modal-overlay" onclick="closeDeleteSessionTasksModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete All Tasks</h3>
+        <button class="modal-close" onclick="closeDeleteSessionTasksModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-session-tasks-message" style="margin: 0 0 12px 0; color: var(--text-primary);"></p>
+        <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDeleteSessionTasksModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmDeleteSessionTasks()" style="background: #ef4444; border-color: #ef4444;">Delete All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Result Modal -->
+  <div id="delete-result-modal" class="modal-overlay" onclick="closeDeleteResultModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Deletion Result</h3>
+        <button class="modal-close" onclick="closeDeleteResultModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="delete-result-message" style="margin: 0; color: var(--text-primary);"></p>
+        <div id="delete-result-details" style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeDeleteResultModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependency Conflict Warning Modal -->
+  <div id="dependency-conflict-modal" class="modal-overlay" onclick="closeDependencyConflictModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="width: 20px; height: 20px;">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <circle cx="12" cy="17" r="0.5" fill="#f59e0b"/>
+          </svg>
+          Dependency Conflict
+        </h3>
+        <button class="modal-close" onclick="closeDependencyConflictModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="dependency-conflict-message" style="color: var(--text-primary); line-height: 1.6;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDependencyConflictModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmReorder()" style="background: #f59e0b; border-color: #f59e0b;">Continue Anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blocked Task Warning Modal -->
+  <div id="blocked-task-modal" class="modal-overlay" onclick="closeBlockedTaskModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 450px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width: 20px; height: 20px;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          Cannot Start Blocked Task
+        </h3>
+        <button class="modal-close" onclick="closeBlockedTaskModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="blocked-task-message" style="color: var(--text-primary); line-height: 1.6;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="closeBlockedTaskModal()">OK</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -17,23 +17,51 @@ When Claude Code breaks down complex work into tasks, you get visibility into it
 
 ## Key Features
 
+### Interactive Task Management
+Full CRUD operations on tasks:
+- **Drag & drop** — Drag task cards between columns to change status instantly
+- **Edit tasks** — Click the edit button or press `E` to modify task subject and description inline
+- **Change status** — Use the status dropdown or drag & drop to move tasks between Pending, In Progress, and Completed
+- **Create tasks** — Click the `+` button in any column or press `N` to create new tasks
+- **Delete tasks** — Remove tasks with the delete button or press `D` (includes safety checks for dependencies)
+
+### Task Reordering & Prioritization
+- **Drag within columns** — Reorder tasks to set priority (position numbers shown on cards)
+- **Dependency validation** — Warns when reordering conflicts with task dependencies
+- **Visual feedback** — Position badges and smooth drag animations
+
+### Session Management
+Organize and customize your Claude Code sessions:
+- **Rename sessions** — Give sessions meaningful names instead of UUIDs
+- **Add descriptions** — Document what each session is working on
+- **View project paths** — See the full filesystem path for each project
+- **Git branch badges** — Display current branch for each session
+- **Status indicators** — Visual activity status (green=active, yellow=inactive)
+- **Configurable limits** — Show 10, 20, 50, or all sessions
+- **Fuzzy search** — Search across session names, task descriptions, and project paths with instant filtering
+
 ### Live Updates
 Real-time feed of all in-progress tasks across every session. See what Claude is actively working on without switching terminals. Each update shows the current action and which session it belongs to.
 
 ### Task Dependencies
-Tasks can block other tasks. The viewer shows these relationships clearly — blocked tasks display what they're waiting on, and you can trace dependency chains to understand the critical path. No more wondering why a task hasn't started.
+Tasks can block other tasks. The viewer shows these relationships clearly — blocked tasks display what they're waiting on, and you can trace dependency chains to understand the critical path. The system prevents moving blocked tasks to in_progress and deleting tasks that block others.
 
 ### Notes
 Add context to any task. Your notes are appended to the task description, so Claude sees them when it reads the task. Use this to clarify requirements, add constraints, or redirect work — all without interrupting Claude's flow.
 
-### Search
-Find tasks instantly. Type in the search box to filter across all columns by subject or description. Case-insensitive, real-time results.
+### Keyboard Shortcuts
+- `E` — Edit the currently selected task
+- `D` — Delete the currently selected task (with confirmation)
+- `N` — Create a new task
+- `?` — Show keyboard shortcuts help
+- `Esc` — Close detail panel or cancel edit mode
+
+### Bulk Operations
+- **Delete all tasks** — Delete all tasks in a session with dependency-aware sorting
+- **Progress tracking** — Detailed feedback on deletion progress
 
 ### Project Filtering
 Filter tasks by project using the dropdown. Working on multiple codebases? See only what's relevant. Combine with the session filter to show just active sessions for a specific project.
-
-### Session Management
-Browse all your Claude Code sessions with progress indicators. Filter to active sessions only, or show everything. Each session shows completion percentage.
 
 ## Installation
 
@@ -99,9 +127,13 @@ npx claude-task-viewer --open
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/sessions` | List all sessions with task counts |
+| `GET /api/sessions` | List all sessions with task counts (supports `?limit=N` parameter) |
 | `GET /api/sessions/:id` | Get all tasks for a session |
+| `PATCH /api/sessions/:id/metadata` | Update session metadata (custom name and description) |
 | `GET /api/tasks/all` | Get all tasks across all sessions |
+| `POST /api/tasks/:session` | Create a new task in a session |
+| `PATCH /api/tasks/:session/:task` | Update a task (status, subject, description, order, dependencies) |
+| `DELETE /api/tasks/:session/:task` | Delete a task (checks dependencies) |
 | `POST /api/tasks/:session/:task/note` | Add a note to a task |
 | `GET /api/events` | SSE stream for live updates |
 
