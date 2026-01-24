@@ -26,6 +26,9 @@ Tasks can block other tasks. The viewer shows these relationships clearly — bl
 ### Notes
 Add context to any task. Your notes are appended to the task description, so Claude sees them when it reads the task. Use this to clarify requirements, add constraints, or redirect work — all without interrupting Claude's flow.
 
+### Search
+Find tasks instantly. Type in the search box to filter across all columns by subject or description. Case-insensitive, real-time results.
+
 ### Project Filtering
 Filter tasks by project using the dropdown. Working on multiple codebases? See only what's relevant. Combine with the session filter to show just active sessions for a specific project.
 
