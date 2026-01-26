@@ -369,45 +369,43 @@ function broadcast(data) {
   }
 }
 
-// Watch for file changes
-if (existsSync(TASKS_DIR)) {
-  const watcher = chokidar.watch(TASKS_DIR, {
-    persistent: true,
-    ignoreInitial: true,
-    depth: 2
-  });
+// Watch for file changes (chokidar handles non-existent paths)
+const watcher = chokidar.watch(TASKS_DIR, {
+  persistent: true,
+  ignoreInitial: true,
+  depth: 2
+});
 
-  watcher.on('all', (event, filePath) => {
-    if (filePath.endsWith('.json')) {
-      const relativePath = path.relative(TASKS_DIR, filePath);
-      const sessionId = relativePath.split(path.sep)[0];
+watcher.on('all', (event, filePath) => {
+  if (filePath.endsWith('.json')) {
+    const relativePath = path.relative(TASKS_DIR, filePath);
+    const sessionId = relativePath.split(path.sep)[0];
 
-      broadcast({
-        type: 'update',
-        event,
-        sessionId,
-        file: path.basename(filePath)
-      });
-    }
-  });
+    broadcast({
+      type: 'update',
+      event,
+      sessionId,
+      file: path.basename(filePath)
+    });
+  }
+});
 
-  console.log(`Watching for changes in: ${TASKS_DIR}`);
-}
+console.log(`Watching for changes in: ${TASKS_DIR}`);
 
 // Also watch projects dir for metadata changes
-if (existsSync(PROJECTS_DIR)) {
-  const projectsWatcher = chokidar.watch(path.join(PROJECTS_DIR, '*/*.jsonl'), {
-    persistent: true,
-    ignoreInitial: true,
-    depth: 1
-  });
+const projectsWatcher = chokidar.watch(PROJECTS_DIR, {
+  persistent: true,
+  ignoreInitial: true,
+  depth: 2
+});
 
-  projectsWatcher.on('all', (event) => {
+projectsWatcher.on('all', (event, filePath) => {
+  if (filePath.endsWith('.jsonl')) {
     // Invalidate cache on any change
     lastMetadataRefresh = 0;
     broadcast({ type: 'metadata-update' });
-  });
-}
+  }
+});
 
 // Start server
 app.listen(PORT, () => {
