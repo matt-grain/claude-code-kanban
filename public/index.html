@@ -65,14 +65,34 @@
 
     /* Sidebar */
     .sidebar {
-      width: 300px;
+      width: var(--sidebar-width, 300px);
       background: var(--bg-surface);
       border-right: 1px solid var(--border);
       box-shadow: 1px 0 12px rgba(0, 0, 0, 0.04);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    .sidebar.collapsed { width: 48px; }
+    .sidebar.collapsed .logo-text,
+    .sidebar.collapsed .connection,
+    .sidebar.collapsed .sidebar-section,
+    .sidebar.collapsed .sidebar-footer { display: none; }
+    .sidebar.collapsed .sidebar-header {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .sidebar.collapsed .sidebar-toggle-btn {
+      position: static;
+    }
+    .sidebar.resizing { transition: none; }
 
     .sidebar-header {
       padding: 20px 20px 16px;
@@ -81,7 +101,60 @@
       background-size: 100% 1px;
       background-repeat: no-repeat;
       background-position: bottom;
+      position: relative;
     }
+
+    .sidebar-toggle-btn {
+      position: absolute;
+      top: 20px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0;
+    }
+
+    .sidebar-toggle-btn:hover {
+      color: var(--text-secondary);
+      background: var(--bg-hover);
+      border-color: var(--border);
+    }
+
+    .sidebar-toggle-btn svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.25s ease;
+    }
+
+    .sidebar.collapsed .sidebar-toggle-btn svg {
+      transform: rotate(180deg);
+    }
+
+    .sidebar-resize-handle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 10;
+      transition: background 0.15s;
+    }
+
+    .sidebar-resize-handle:hover,
+    .sidebar-resize-handle.dragging {
+      background: var(--accent-dim);
+    }
+
+    .sidebar.collapsed .sidebar-resize-handle { display: none; }
 
     .logo {
       display: flex;
@@ -115,9 +188,9 @@
     .connection {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 12px;
-      font-size: 12px;
+      gap: 5px;
+      margin-top: 10px;
+      font-size: 10px;
       color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -616,6 +689,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      padding-right: 8px;
     }
 
     .column-empty {
@@ -1620,6 +1694,11 @@
           <span class="connection-dot"></span>
           <span>Connecting</span>
         </div>
+        <button id="sidebar-toggle" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
       </header>
 
       <!-- Live Updates -->
@@ -1678,6 +1757,8 @@
         <div id="sessions-list" class="sessions-list"></div>
       </div>
 
+      <div class="sidebar-footer" id="sidebar-footer"></div>
+      <div class="sidebar-resize-handle" id="sidebar-resize"></div>
     </aside>
 
     <!-- Main -->
@@ -2130,8 +2211,8 @@
         <div class="live-item" onclick="openLiveTask('${task.sessionId}', '${task.id}')">
           <span class="pulse"></span>
           <div class="live-item-content">
-            <div class="live-item-action">${escapeHtml(task.activeForm || task.subject)}</div>
-            <div class="live-item-session">${escapeHtml(task.sessionName || task.sessionId.slice(0, 8))}</div>
+            <div class="live-item-action" title="${escapeHtml(task.activeForm || task.subject)}">${escapeHtml(task.activeForm || task.subject)}</div>
+            <div class="live-item-session" title="${escapeHtml(task.sessionName || task.sessionId)}">${escapeHtml(task.sessionName || task.sessionId)}</div>
           </div>
         </div>
       `).join('');
@@ -2565,6 +2646,10 @@
 
       focusZone = zone;
       if (zone === 'sidebar') {
+        if (sidebar.classList.contains('collapsed')) {
+          sidebar.classList.remove('collapsed');
+          localStorage.setItem('sidebar-collapsed', false);
+        }
         sidebar.classList.add('sidebar-focused');
         const items = getSessionItems();
         if (selectedSessionIdx < 0 && items.length > 0) {
@@ -2888,6 +2973,12 @@
 
       if (document.querySelector('.modal-overlay.visible')) return;
 
+      if (e.key === '[') {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
       // Tab toggles focus zone
       if (e.key === 'Tab') {
         e.preventDefault();
@@ -3141,6 +3232,56 @@
       updateThemeIcon();
     }
 
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const collapsed = sidebar.classList.toggle('collapsed');
+      localStorage.setItem('sidebar-collapsed', collapsed);
+    }
+
+    function loadSidebarState() {
+      const sidebar = document.querySelector('.sidebar');
+      if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        sidebar.classList.add('collapsed');
+      }
+      const w = localStorage.getItem('sidebar-width');
+      if (w) {
+        sidebar.style.setProperty('--sidebar-width', w);
+      }
+    }
+
+    function initSidebarResize() {
+      const sidebar = document.querySelector('.sidebar');
+      const handle = document.getElementById('sidebar-resize');
+      let startX, startWidth;
+
+      handle.addEventListener('mousedown', (e) => {
+        if (sidebar.classList.contains('collapsed')) return;
+        startX = e.clientX;
+        startWidth = sidebar.offsetWidth;
+        sidebar.classList.add('resizing');
+        handle.classList.add('dragging');
+        document.body.style.userSelect = 'none';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        e.preventDefault();
+      });
+
+      function onMove(e) {
+        const w = Math.min(600, Math.max(200, startWidth + e.clientX - startX));
+        sidebar.style.setProperty('--sidebar-width', w + 'px');
+        sidebar.style.width = w + 'px';
+      }
+
+      function onUp() {
+        sidebar.classList.remove('resizing');
+        handle.classList.remove('dragging');
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        localStorage.setItem('sidebar-width', sidebar.style.getPropertyValue('--sidebar-width'));
+      }
+    }
+
     function loadPreferences() {
       document.getElementById('session-filter').value = sessionFilter;
       document.getElementById('session-limit').value = sessionLimit;
@@ -3259,8 +3400,20 @@
       renderKanban();
     }
 
+    // Sync sidebar header height with view header
+    const sidebarHeader = document.querySelector('.sidebar-header');
+    const viewHeader = document.querySelector('.view-header');
+    new ResizeObserver(() => {
+      sidebarHeader.style.height = viewHeader.offsetHeight + 'px';
+    }).observe(viewHeader);
+
     // Init
     loadTheme();
+    loadSidebarState();
+    initSidebarResize();
+    fetch('/api/version').then(r => r.json()).then(d => {
+      document.getElementById('sidebar-footer').textContent = 'v' + d.version;
+    }).catch(() => {});
 
     const urlState = getUrlState();
     sessionFilter = urlState.filter || 'active';
@@ -3325,6 +3478,10 @@
               <tr>
                 <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Tab</kbd></td>
                 <td style="padding: 4px 0; color: var(--text-primary);">Toggle sidebar / board focus</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">[</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Toggle sidebar collapse</td>
               </tr>
             </table>
           </div>

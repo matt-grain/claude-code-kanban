@@ -329,6 +329,11 @@ app.get('/api/teams/:name', (req, res) => {
   res.json(config);
 });
 
+app.get('/api/version', (req, res) => {
+  const pkg = require('./package.json');
+  res.json({ version: pkg.version });
+});
+
 // API: Get all tasks across all sessions
 app.get('/api/tasks/all', async (req, res) => {
   try {
