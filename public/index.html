@@ -3239,6 +3239,7 @@
       localStorage.setItem('sidebar-collapsed', collapsed);
       if (collapsed) {
         sidebar.style.width = '';
+        if (focusZone === 'sidebar') setFocusZone('board');
       } else {
         const w = getComputedStyle(sidebar).getPropertyValue('--sidebar-width');
         if (w) sidebar.style.width = w;
