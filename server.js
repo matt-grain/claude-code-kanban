@@ -517,11 +517,27 @@ projectsWatcher.on('all', (event, filePath) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Claude Task Viewer running at http://localhost:${PORT}`);
+const server = app.listen(PORT, () => {
+  const actualPort = server.address().port;
+  console.log(`Claude Task Viewer running at http://localhost:${actualPort}`);
 
-  // Open browser if --open flag is passed
   if (process.argv.includes('--open')) {
-    import('open').then(open => open.default(`http://localhost:${PORT}`));
+    import('open').then(open => open.default(`http://localhost:${actualPort}`));
+  }
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} in use, trying random port...`);
+    const fallback = app.listen(0, () => {
+      const actualPort = fallback.address().port;
+      console.log(`Claude Task Viewer running at http://localhost:${actualPort}`);
+
+      if (process.argv.includes('--open')) {
+        import('open').then(open => open.default(`http://localhost:${actualPort}`));
+      }
+    });
+  } else {
+    throw err;
   }
 });
