@@ -10,8 +10,8 @@
   <style>
     @font-face { font-display: swap; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <style>
     :root {
       --bg-deep: #101114;
@@ -1050,13 +1050,10 @@
     .team-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       font-size: 11px;
       font-weight: 500;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: var(--team-dim);
-      color: var(--team);
+      color: var(--text-muted);
       flex-shrink: 0;
     }
 
@@ -2224,7 +2221,7 @@
             <div class="session-name">
               <span>${escapeHtml(primaryName)}</span>
               <span class="session-indicators">
-                ${isTeam ? `<span class="team-badge" title="${memberCount} team members">👥 ${memberCount}</span>` : ''}
+                ${isTeam ? `<span class="team-badge" title="${memberCount} team members"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${memberCount}</span>` : ''}
                 ${isTeam ? `<span class="team-info-btn" onclick="event.stopPropagation(); showTeamModalForSession('${session.id}')" title="View team info">ℹ</span>` : ''}
                 ${hasInProgress ? '<span class="pulse"></span>' : ''}
               </span>
