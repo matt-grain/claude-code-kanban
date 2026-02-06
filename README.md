@@ -1,4 +1,4 @@
-# Claude Task Viewer
+# Claude Code Kanban
 
 A real-time Kanban board for **observing** Claude Code tasks. See what Claude is working on, track dependencies between tasks, and manage task cleanup and priority.
 
@@ -8,7 +8,7 @@ A real-time Kanban board for **observing** Claude Code tasks. See what Claude is
 
 ## Why Use This?
 
-When Claude Code breaks down complex work into tasks, you get visibility into its thinking — but only in the terminal. Claude Task Viewer gives you a persistent, visual dashboard to:
+When Claude Code breaks down complex work into tasks, you get visibility into its thinking — but only in the terminal. Claude Code Kanban gives you a persistent, visual dashboard to:
 
 - **See the big picture** — All your sessions and tasks in one place
 - **Know what's happening now** — Live Updates show exactly what Claude is doing across all sessions
@@ -24,6 +24,11 @@ Claude Code controls task state — the viewer shows you what's happening:
 - **Task dependencies** — Visualise blockedBy/blocks relationships to understand the critical path
 - **Live activity feed** — Real-time stream of all in-progress tasks across every session
 
+### Agent Teams Support
+- **Team detection** — Automatically detects team sessions with multiple agents
+- **Owner filtering** — Filter Kanban board by team member with color-coded agent indicators
+- **Member count badges** — See how many agents are working in each session
+
 ### Cleanup Operations
 - **Delete tasks** — Remove tasks with the delete button or press `D` (includes safety checks for dependencies)
 - **Bulk delete** — Delete all tasks in a session at once
@@ -32,8 +37,9 @@ Claude Code controls task state — the viewer shows you what's happening:
 View and organize your Claude Code sessions:
 - **Session discovery** — Automatically finds all sessions in `~/.claude/tasks/` and `~/.claude/projects/`
 - **View project paths** — See the full filesystem path for each project
+- **Git branch display** — See which branch each session is working on
 - **Fuzzy search** — Search across session names, task descriptions, and project paths with instant filtering
-- **Session limits** — Filter to show only active sessions or a specific number of recent sessions
+- **Session filters** — Filter by active/all sessions and by project
 
 ### Keyboard Shortcuts
 - `?` — Show help with all keyboard shortcuts
@@ -45,15 +51,22 @@ View and organize your Claude Code sessions:
 ### Quick start
 
 ```bash
-npx claude-task-viewer
+npx claude-code-kanban
 ```
 
 Open http://localhost:3456
 
+### Global install
+
+```bash
+npm install -g claude-code-kanban
+claude-code-kanban --open
+```
+
 ### From source
 
 ```bash
-git clone https://github.com/L1AD/claude-task-viewer.git
+git clone https://github.com/NikiforovAll/claude-task-viewer.git
 cd claude-task-viewer
 npm install
 npm start
@@ -72,6 +85,8 @@ Claude Code stores tasks in `~/.claude/tasks/`. Each session has its own folder:
 ```
 
 The viewer watches this directory and pushes updates via Server-Sent Events. Changes appear instantly — no polling, no refresh needed.
+
+If port 3456 is already in use, the server automatically falls back to a random available port.
 
 ## Task Structure
 
@@ -94,13 +109,13 @@ The viewer watches this directory and pushes updates via Server-Sent Events. Cha
 
 ```bash
 # Custom port
-PORT=8080 npx claude-task-viewer
+PORT=8080 npx claude-code-kanban
 
 # Open browser automatically
-npx claude-task-viewer --open
+npx claude-code-kanban --open
 
 # Use a different Claude config directory (for multiple accounts)
-npx claude-task-viewer --dir=~/.claude-work
+npx claude-code-kanban --dir=~/.claude-work
 ```
 
 ## API
@@ -112,6 +127,7 @@ npx claude-task-viewer --dir=~/.claude-work
 | `/api/tasks/all` | GET | Get all tasks across all sessions |
 | `/api/tasks/:session/:task` | DELETE | Delete a task (checks dependencies) |
 | `/api/tasks/:session/:task/note` | POST | Add a note to a task |
+| `/api/teams/:name` | GET | Load team configuration |
 | `/api/events` | GET | SSE stream for live updates |
 
 ## Design Philosophy
@@ -119,25 +135,6 @@ npx claude-task-viewer --dir=~/.claude-work
 **Observation over Control**: Claude Code owns task state. The task viewer's job is to show you what Claude is doing, not to direct it. This keeps the viewer in sync with reality and prevents confusion about whether a task's status reflects what Claude is actually doing or just human intent.
 
 **Limited interaction:** You can delete tasks and add notes, but task status, subject, and description reflect Claude's actual work and can only be changed by Claude Code itself.
-
-## Roadmap
-
-### ✅ Completed
-- **Real-time observation** — Live updates feed showing what Claude is doing across all sessions
-- **Task dependencies** — Visualise blockedBy/blocks relationships
-- **Task deletion** — Delete tasks with dependency checking
-- **Keyboard shortcuts** — ?, D, Esc for quick actions
-- **Session discovery** — Automatic detection of all Claude Code sessions
-- **Search** — Search across sessions and tasks
-
-### 🚧 Planned
-- **Enhanced search & filter** — Filter by status, dependencies, date ranges
-- **Session grouping** — Group sessions by project or time period
-- **Task timeline** — See when tasks were created and completed
-- **Export** — Export session data for analysis or reporting
-- **Desktop notifications** — Optional notifications when tasks complete
-
-[Open an issue](https://github.com/L1AD/claude-task-viewer/issues) with ideas or feedback.
 
 ## License
 
