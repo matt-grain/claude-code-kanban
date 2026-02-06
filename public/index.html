@@ -745,6 +745,7 @@
       padding-top: 10px;
       border-top: 1px solid var(--border);
       font-size: 11px;
+      font-weight: 500;
       color: var(--accent);
     }
 
@@ -877,31 +878,35 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
       border-radius: 20px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
 
     .detail-status.pending {
       background: var(--bg-elevated);
-      color: var(--text-tertiary);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
     }
 
     .detail-status.in_progress {
       background: var(--accent-dim);
       color: var(--accent);
+      border: 1px solid var(--accent);
     }
 
     .detail-status.completed {
       background: var(--success-dim);
       color: var(--success);
+      border: 1px solid var(--success);
     }
 
     .detail-status .dot {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: currentColor;
     }
@@ -917,8 +922,12 @@
     }
 
     .detail-box.active {
-      background: var(--accent-dim);
-      border: 1px solid rgba(232, 111, 51, 0.35);
+      background: rgba(232, 111, 51, 0.08);
+      border: 1px solid rgba(232, 111, 51, 0.2);
+      color: var(--text-primary);
+    }
+
+    .detail-box.active strong {
       color: var(--accent);
     }
 
@@ -2423,21 +2432,16 @@
           </div>
         </div>
 
-        <div class="detail-section">
-          <div class="detail-label">Status</div>
-          <div style="font-size: 14px; color: var(--text-primary); padding: 8px 12px; background: var(--bg-secondary); border-radius: 6px; display: inline-block;">
-            ${task.status === 'pending' ? 'Pending' : task.status === 'in_progress' ? 'In Progress' : 'Completed'}
-          </div>
-          ${isBlocked && task.status !== 'in_progress' ? '<div style="font-size: 10px; color: var(--warning); margin-top: 4px;">Blocked by dependencies</div>' : ''}
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Status is controlled by Claude Code</div>
+        <div class="detail-section" style="display: flex; gap: 12px; align-items: center;">
+          <div>${statusLabels[task.status] || ''}</div>
+          ${task.owner ? `<div style="font-size: 13px; color: ${getOwnerColor(task.owner).color}; font-weight: 500;">${escapeHtml(task.owner)}</div>` : ''}
+          ${isBlocked && task.status !== 'in_progress' ? '<div style="font-size: 10px; color: var(--warning);">Blocked</div>' : ''}
         </div>
 
-        ${task.owner ? `
-          <div class="detail-section">
-            <div class="detail-label">Owner</div>
-            <div style="font-size: 14px; color: ${getOwnerColor(task.owner).color}; font-weight: 500;">${escapeHtml(task.owner)}</div>
-          </div>
-        ` : ''}
+        <div class="detail-section">
+          <div class="detail-label">Description</div>
+          <div class="detail-desc">${task.description ? DOMPurify.sanitize(marked.parse(task.description)) : '<em style="color: var(--text-muted);">No description</em>'}</div>
+        </div>
 
         ${task.activeForm && task.status === 'in_progress' ? `
           <div class="detail-section">
@@ -2463,11 +2467,6 @@
               ? `<div class="detail-box blocks"><strong>Blocks:</strong> ${task.blocks.map(id => '#' + id).join(', ')}</div>`
               : '<em style="color: var(--text-muted); font-size: 13px;">No tasks blocked</em>'}
           </div>
-        </div>
-
-        <div class="detail-section">
-          <div class="detail-label">Description</div>
-          <div class="detail-desc">${task.description ? DOMPurify.sanitize(marked.parse(task.description)) : '<em style="color: var(--text-muted);">No description</em>'}</div>
         </div>
 
         <div class="detail-section note-section">
