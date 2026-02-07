@@ -144,13 +144,18 @@ function loadSessionMetadata() {
 
       // Find all .jsonl files (session logs)
       const files = readdirSync(projectPath).filter(f => f.endsWith('.jsonl'));
+      const sessionIds = [];
 
+      // First pass: read all JSONL files
+      let resolvedProjectPath = null;
       for (const file of files) {
         const sessionId = file.replace('.jsonl', '');
         const jsonlPath = path.join(projectPath, file);
-
-        // Read customTitle, slug, and actual project path from JSONL
         const sessionInfo = readSessionInfoFromJsonl(jsonlPath);
+
+        if (sessionInfo.projectPath && !resolvedProjectPath) {
+          resolvedProjectPath = sessionInfo.projectPath;
+        }
 
         metadata[sessionId] = {
           customTitle: sessionInfo.customTitle,
@@ -158,6 +163,16 @@ function loadSessionMetadata() {
           project: sessionInfo.projectPath || null,
           jsonlPath: jsonlPath
         };
+        sessionIds.push(sessionId);
+      }
+
+      // Second pass: fill in missing project paths from siblings
+      if (resolvedProjectPath) {
+        for (const sid of sessionIds) {
+          if (!metadata[sid].project) {
+            metadata[sid].project = resolvedProjectPath;
+          }
+        }
       }
 
       // Also check sessions-index.json for custom names (if /rename was used)
@@ -168,8 +183,15 @@ function loadSessionMetadata() {
           const entries = indexData.entries || [];
 
           for (const entry of entries) {
-            if (entry.sessionId && metadata[entry.sessionId]) {
-              // Add other useful fields
+            if (entry.sessionId) {
+              if (!metadata[entry.sessionId]) {
+                metadata[entry.sessionId] = {
+                  customTitle: null,
+                  slug: null,
+                  project: entry.projectPath || null,
+                  jsonlPath: null
+                };
+              }
               metadata[entry.sessionId].description = entry.description || null;
               metadata[entry.sessionId].gitBranch = entry.gitBranch || null;
               metadata[entry.sessionId].created = entry.created || null;
@@ -295,6 +317,32 @@ app.get('/api/sessions', async (req, res) => {
       }
     }
 
+    // Add sessions from metadata that don't have task directories
+    for (const [sessionId, meta] of Object.entries(metadata)) {
+      if (!sessionsMap.has(sessionId)) {
+        let modifiedAt = meta.created || null;
+        if (!modifiedAt && meta.jsonlPath) {
+          try { modifiedAt = statSync(meta.jsonlPath).mtime.toISOString(); } catch (e) {}
+        }
+        sessionsMap.set(sessionId, {
+          id: sessionId,
+          name: getSessionDisplayName(sessionId, meta),
+          slug: meta.slug || null,
+          project: meta.project || null,
+          description: meta.description || null,
+          gitBranch: meta.gitBranch || null,
+          taskCount: 0,
+          completed: 0,
+          inProgress: 0,
+          pending: 0,
+          createdAt: meta.created || null,
+          modifiedAt: modifiedAt || new Date(0).toISOString(),
+          isTeam: false,
+          memberCount: 0
+        });
+      }
+    }
+
     // Convert map to array and sort by most recently modified
     let sessions = Array.from(sessionsMap.values());
     sessions.sort((a, b) => new Date(b.modifiedAt) - new Date(a.modifiedAt));
@@ -309,6 +357,24 @@ app.get('/api/sessions', async (req, res) => {
     console.error('Error listing sessions:', error);
     res.status(500).json({ error: 'Failed to list sessions' });
   }
+});
+
+// API: Get distinct project paths with last-modified timestamps
+app.get('/api/projects', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const metadata = loadSessionMetadata();
+  const projectMap = {};
+  for (const meta of Object.values(metadata)) {
+    if (!meta.project) continue;
+    const mtime = meta.jsonlPath ? (() => { try { return statSync(meta.jsonlPath).mtime; } catch (e) { return null; } })() : null;
+    if (!projectMap[meta.project] || (mtime && mtime > projectMap[meta.project])) {
+      projectMap[meta.project] = mtime;
+    }
+  }
+  const projects = Object.entries(projectMap)
+    .map(([path, mtime]) => ({ path, modifiedAt: mtime ? mtime.toISOString() : null }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  res.json(projects);
 });
 
 // API: Get tasks for a session

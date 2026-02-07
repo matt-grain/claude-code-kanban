@@ -1891,7 +1891,8 @@
     let viewMode = 'session';
     let sessionFilter = 'active';
     let sessionLimit = '20';
-    let filterProject = null; // null = all projects, or project path to filter
+    let filterProject = '__recent__'; // null = all, '__recent__' = last 24h, or project path
+    let recentProjects = new Set();
     let searchQuery = ''; // Search query for fuzzy search
     let allTasksCache = []; // Cache all tasks for search
     let bulkDeleteSessionId = null; // Track session for bulk delete
@@ -1920,7 +1921,7 @@
       if (currentSessionId) params.set('session', currentSessionId);
       if (sessionFilter !== 'active') params.set('filter', sessionFilter);
       if (sessionLimit !== '20') params.set('limit', sessionLimit);
-      if (filterProject) params.set('project', filterProject);
+      if (filterProject && filterProject !== '__recent__') params.set('project', filterProject);
       if (ownerFilter) params.set('owner', ownerFilter);
       if (searchQuery) params.set('search', searchQuery);
       const qs = params.toString();
@@ -1932,7 +1933,7 @@
       history.replaceState(null, '', window.location.pathname);
       sessionFilter = 'active';
       sessionLimit = '20';
-      filterProject = null;
+      filterProject = '__recent__';
       ownerFilter = '';
       searchQuery = '';
       viewMode = 'all';
@@ -2217,7 +2218,7 @@
         const allTasks = await res.json();
         let activeTasks = allTasks.filter(t => t.status === 'in_progress');
         if (filterProject) {
-          activeTasks = activeTasks.filter(t => t.project === filterProject);
+          activeTasks = activeTasks.filter(t => matchesProjectFilter(t.project));
         }
         renderLiveUpdates(activeTasks);
       } catch (error) {
@@ -2295,7 +2296,7 @@
         const res = await fetch('/api/tasks/all');
         let tasks = await res.json();
         if (filterProject) {
-          tasks = tasks.filter(t => t.project === filterProject);
+          tasks = tasks.filter(t => matchesProjectFilter(t.project));
         }
         currentTasks = tasks;
         updateUrl();
@@ -2315,9 +2316,10 @@
       const completed = currentTasks.filter(t => t.status === 'completed').length;
       const percent = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
 
-      const projectName = filterProject ? filterProject.split('/').pop() : null;
-      sessionTitle.textContent = filterProject ? `Tasks: ${projectName}` : 'All Tasks';
-      sessionMeta.textContent = filterProject
+      const isFiltered = filterProject && filterProject !== '__recent__';
+      const projectName = isFiltered ? filterProject.split(/[/\\]/).pop() : null;
+      sessionTitle.textContent = isFiltered ? `Tasks: ${projectName}` : (filterProject === '__recent__' ? 'Recent Tasks' : 'All Tasks');
+      sessionMeta.textContent = isFiltered
         ? `${totalTasks} tasks in this project`
         : `${totalTasks} tasks across ${sessions.length} sessions`;
       progressPercent.textContent = `${percent}%`;
@@ -2335,7 +2337,7 @@
         filteredSessions = filteredSessions.filter(s => s.pending > 0 || s.inProgress > 0);
       }
       if (filterProject) {
-        filteredSessions = filteredSessions.filter(s => s.project === filterProject);
+        filteredSessions = filteredSessions.filter(s => matchesProjectFilter(s.project));
       }
 
       // Apply search filter
@@ -3214,6 +3216,12 @@
       fetchSessions();
     }
 
+    function matchesProjectFilter(project) {
+      if (!filterProject) return true;
+      if (filterProject === '__recent__') return recentProjects.has(project);
+      return project === filterProject;
+    }
+
     function filterByProject(project) {
       filterProject = project || null;
       updateUrl();
@@ -3222,15 +3230,30 @@
       showAllTasks();
     }
 
-    function updateProjectDropdown() {
+    async function updateProjectDropdown() {
       const dropdown = document.getElementById('project-filter');
-      const projects = [...new Set(sessions.map(s => s.project).filter(Boolean))].sort();
+      let projects;
+      try {
+        const res = await fetch('/api/projects');
+        projects = await res.json();
+      } catch (e) {
+        projects = [...new Set(sessions.map(s => s.project).filter(Boolean))].sort()
+          .map(p => ({ path: p, modifiedAt: null }));
+      }
 
-      dropdown.innerHTML = '<option value="">All Projects</option>' +
+      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+      recentProjects = new Set(
+        projects.filter(p => p.modifiedAt && new Date(p.modifiedAt).getTime() > cutoff).map(p => p.path)
+      );
+
+      const recentSelected = filterProject === '__recent__' ? ' selected' : '';
+      dropdown.innerHTML =
+        '<option value="">All Projects</option>' +
+        `<option value="__recent__"${recentSelected}>Recent (24h)</option>` +
         projects.map(p => {
-          const name = p.split('/').pop();
-          const selected = p === filterProject ? ' selected' : '';
-          return `<option value="${p}"${selected} title="${escapeHtml(p)}">${escapeHtml(name)}</option>`;
+          const name = p.path.split(/[/\\]/).pop();
+          const selected = p.path === filterProject ? ' selected' : '';
+          return `<option value="${escapeHtml(p.path)}"${selected} title="${escapeHtml(p.path)}">${escapeHtml(name)}</option>`;
         }).join('');
     }
 
@@ -3376,6 +3399,10 @@
       // Session & project details as compact key-value rows
       const infoRows = [];
       infoRows.push(['Session', `<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; user-select: all;">${escapeHtml(session.id)}</span>`]);
+      if (session.modifiedAt) {
+        const d = new Date(session.modifiedAt);
+        infoRows.push(['Last Modified', `${formatDate(session.modifiedAt)} <span style="font-size: 10px; color: var(--text-tertiary);">(${d.toLocaleString()})</span>`]);
+      }
       if (session.project) {
         const projectName = session.project.split(/[/\\]/).pop();
         infoRows.push(['Project', `${escapeHtml(projectName)}<br><span style="font-size: 10px; color: var(--text-tertiary);">${escapeHtml(session.project)}</span>`]);
@@ -3546,7 +3573,7 @@
     const urlState = getUrlState();
     sessionFilter = urlState.filter || 'active';
     sessionLimit = urlState.limit || '20';
-    filterProject = urlState.project || null;
+    filterProject = urlState.project || '__recent__';
     ownerFilter = urlState.owner || '';
     searchQuery = urlState.search || '';
 
@@ -3570,7 +3597,7 @@
       const s = getUrlState();
       sessionFilter = s.filter || 'active';
       sessionLimit = s.limit || '20';
-      filterProject = s.project || null;
+      filterProject = s.project || '__recent__';
       ownerFilter = s.owner || '';
       searchQuery = s.search || '';
       loadPreferences();
