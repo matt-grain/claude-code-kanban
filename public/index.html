@@ -2425,7 +2425,7 @@
         const memberCount = session.memberCount || 0;
 
         return `
-          <button onclick="fetchTasks('${session.id}')" class="session-item ${isActive ? 'active' : ''}" title="${tooltip}">
+          <button onclick="fetchTasks('${session.id}')" data-session-id="${session.id}" class="session-item ${isActive ? 'active' : ''}" title="${tooltip}">
             <div class="session-name">${escapeHtml(primaryName)}</div>
             ${secondaryName ? `<div class="session-secondary">${escapeHtml(secondaryName)}</div>` : ''}
             ${gitBranch ? `<div class="session-branch">${gitBranch}</div>` : ''}
@@ -3064,6 +3064,20 @@
           setFocusZone('board');
           return;
         }
+        if (e.key === 'p' || e.key === 'P') {
+          e.preventDefault();
+          const highlighted = sessionsList.querySelector('.session-item.kb-selected');
+          const sid = highlighted?.dataset.sessionId || currentSessionId;
+          if (sid) openPlanForSession(sid);
+          return;
+        }
+        if (e.key === 'i' || e.key === 'I') {
+          e.preventDefault();
+          const highlighted = sessionsList.querySelector('.session-item.kb-selected');
+          const sid = highlighted?.dataset.sessionId || currentSessionId;
+          if (sid) showSessionInfoModal(sid);
+          return;
+        }
         if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
           e.preventDefault();
           showHelpModal();
@@ -3104,6 +3118,20 @@
 
       if (e.key === 'Escape' && detailPanel.classList.contains('visible')) {
         closeDetailPanel();
+      }
+
+      if (e.key === 'p' || e.key === 'P') {
+        e.preventDefault();
+        const sid = selectedSessionId || currentSessionId;
+        if (sid) openPlanForSession(sid);
+        return;
+      }
+
+      if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault();
+        const sid = selectedSessionId || currentSessionId;
+        if (sid) showSessionInfoModal(sid);
+        return;
       }
 
       if ((e.key === 'd' || e.key === 'D') && selectedTaskId) {
@@ -3516,6 +3544,17 @@
 
     let _planSessionId = null;
 
+    function openPlanForSession(sid) {
+      fetch(`/api/sessions/${sid}/plan`).then(r => r.ok ? r.json() : null).catch(() => null)
+        .then(data => {
+          if (data?.content) {
+            _pendingPlanContent = data.content;
+            _planSessionId = sid;
+            openPlanModal();
+          }
+        });
+    }
+
     function openPlanModal() {
       if (!_pendingPlanContent) return;
       const body = document.getElementById('plan-modal-body');
@@ -3704,6 +3743,14 @@
           <div>
             <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 14px; font-weight: 600;">Task Actions</h4>
             <table style="width: 100%; font-size: 13px;">
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">P</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Open session plan</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">I</kbd></td>
+                <td style="padding: 4px 0; color: var(--text-primary);">Open session info</td>
+              </tr>
               <tr>
                 <td style="padding: 4px 0; color: var(--text-secondary);"><kbd style="background: var(--bg-hover); padding: 2px 6px; border-radius: 4px; font-family: monospace;">D</kbd></td>
                 <td style="padding: 4px 0; color: var(--text-primary);">Delete selected task</td>
