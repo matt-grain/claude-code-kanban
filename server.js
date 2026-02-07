@@ -183,6 +183,25 @@ function loadSessionMetadata() {
     console.error('Error loading session metadata:', e);
   }
 
+  // For team sessions with no JSONL match, try team config for project path
+  if (existsSync(TASKS_DIR)) {
+    const taskDirs = readdirSync(TASKS_DIR, { withFileTypes: true })
+      .filter(d => d.isDirectory());
+    for (const dir of taskDirs) {
+      if (!metadata[dir.name]) {
+        const teamConfig = loadTeamConfig(dir.name);
+        if (teamConfig) {
+          metadata[dir.name] = {
+            customTitle: null,
+            slug: null,
+            project: teamConfig.working_dir || null,
+            jsonlPath: null
+          };
+        }
+      }
+    }
+  }
+
   sessionMetadataCache = metadata;
   lastMetadataRefresh = now;
   return metadata;
