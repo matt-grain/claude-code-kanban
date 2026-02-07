@@ -3347,21 +3347,24 @@
 
       let html = '';
 
-      // Project info section
+      // Session & project details as compact key-value rows
+      const infoRows = [];
+      infoRows.push(['Session', `<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; user-select: all;">${escapeHtml(session.id)}</span>`]);
       if (session.project) {
         const projectName = session.project.split(/[/\\]/).pop();
-        html += `<div style="font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Project</div>`;
-        html += `<div class="team-modal-meta" style="margin-bottom: 16px;">`;
-        html += escapeHtml(projectName);
-        html += `<br><span style="font-size: 10px; color: var(--text-tertiary);">${escapeHtml(session.project)}</span>`;
+        infoRows.push(['Project', `${escapeHtml(projectName)}<br><span style="font-size: 10px; color: var(--text-tertiary);">${escapeHtml(session.project)}</span>`]);
         if (session.gitBranch) {
-          html += `<br>Branch: ${escapeHtml(session.gitBranch)}`;
+          infoRows.push(['Branch', escapeHtml(session.gitBranch)]);
         }
         if (session.description) {
-          html += `<br>${escapeHtml(session.description)}`;
+          infoRows.push(['Description', escapeHtml(session.description)]);
         }
-        html += `</div>`;
       }
+      html += `<div class="team-modal-meta" style="margin-bottom: 16px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline;">`;
+      infoRows.forEach(([label, value]) => {
+        html += `<span style="font-weight: 500; color: var(--text-secondary); font-size: 12px; white-space: nowrap;">${label}</span><span>${value}</span>`;
+      });
+      html += `</div>`;
 
       // Team info section
       if (teamConfig) {
