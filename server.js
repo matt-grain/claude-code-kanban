@@ -240,6 +240,19 @@ function loadSessionMetadata() {
 /**
  * Get display name for a session: customTitle > slug > null (frontend shows UUID)
  */
+function getPlanInfo(slug) {
+  if (!slug) return { hasPlan: false, planTitle: null };
+  const planPath = path.join(PLANS_DIR, `${slug}.md`);
+  if (!existsSync(planPath)) return { hasPlan: false, planTitle: null };
+  try {
+    const head = readFileSync(planPath, 'utf8').slice(0, 512);
+    const match = head.match(/^#\s+(.+)$/m);
+    return { hasPlan: true, planTitle: match ? match[1].trim() : null };
+  } catch (e) {
+    return { hasPlan: true, planTitle: null };
+  }
+}
+
 function getSessionDisplayName(sessionId, meta) {
   if (meta?.customTitle) return meta.customTitle;
   if (meta?.slug) return meta.slug;
@@ -303,6 +316,7 @@ app.get('/api/sessions', async (req, res) => {
 
           const isTeam = isTeamSession(entry.name);
           const memberCount = isTeam ? (loadTeamConfig(entry.name)?.members?.length || 0) : 0;
+          const planInfo = getPlanInfo(meta.slug);
 
           sessionsMap.set(entry.name, {
             id: entry.name,
@@ -318,7 +332,8 @@ app.get('/api/sessions', async (req, res) => {
             createdAt: meta.created || null,
             modifiedAt: modifiedAt,
             isTeam,
-            memberCount
+            memberCount,
+            ...planInfo
           });
         }
       }
@@ -331,6 +346,7 @@ app.get('/api/sessions', async (req, res) => {
         if (!modifiedAt && meta.jsonlPath) {
           try { modifiedAt = statSync(meta.jsonlPath).mtime.toISOString(); } catch (e) {}
         }
+        const planInfo = getPlanInfo(meta.slug);
         sessionsMap.set(sessionId, {
           id: sessionId,
           name: getSessionDisplayName(sessionId, meta),
@@ -345,7 +361,8 @@ app.get('/api/sessions', async (req, res) => {
           createdAt: meta.created || null,
           modifiedAt: modifiedAt || new Date(0).toISOString(),
           isTeam: false,
-          memberCount: 0
+          memberCount: 0,
+          ...planInfo
         });
       }
     }
@@ -674,6 +691,19 @@ const projectsWatcher = chokidar.watch(PROJECTS_DIR, {
 projectsWatcher.on('all', (event, filePath) => {
   if ((event === 'add' || event === 'change' || event === 'unlink') && filePath.endsWith('.jsonl')) {
     // Invalidate cache on any change
+    lastMetadataRefresh = 0;
+    broadcast({ type: 'metadata-update' });
+  }
+});
+
+const plansWatcher = chokidar.watch(PLANS_DIR, {
+  persistent: true,
+  ignoreInitial: true,
+  depth: 0
+});
+
+plansWatcher.on('all', (event, filePath) => {
+  if ((event === 'add' || event === 'change' || event === 'unlink') && filePath.endsWith('.md')) {
     lastMetadataRefresh = 0;
     broadcast({ type: 'metadata-update' });
   }
