@@ -2713,7 +2713,6 @@
       const model = shortModelName(task.model);
       const isMain = task.subagentType === 'main agent';
       return `<div class="task-agent-badge${isMain ? ' main-agent' : ''}">
-        <span class="agent-dot"></span>
         ${task.subagentType ? `<span>${escapeHtml(task.subagentType)}</span>` : ''}
         ${model ? `<span class="agent-model">${escapeHtml(model)}</span>` : ''}
       </div>`;
